@@ -1,16 +1,9 @@
 """Main module."""
 
-import gzip
-import json
-import multiprocessing
-
-# from google.protobuf.json_format import MessageToDict
 from pymongo import MongoClient
 from pysc2 import run_configs
 
 from sc2reaper.sweeper import extract_action_frames, extract_macro_actions
-
-STEP_MULT = 24
 
 def ingest(replay_file):
     run_config = run_configs.get()
