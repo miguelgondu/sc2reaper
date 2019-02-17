@@ -8,7 +8,7 @@ from action_extraction import get_actions, get_human_name
 from state_extraction import get_state
 from unit_extraction import get_unit_doc
 
-from encoder import encoder
+from encoder import encode
 
 import gzip
 import json
@@ -30,9 +30,6 @@ interface = sc_pb.InterfaceOptions(raw=True, score=True,
 
 size.assign_to(interface.feature_layer.resolution)
 size.assign_to(interface.feature_layer.minimap_resolution)
-
-enc = encoder()
-e = lambda x: 'e' + str(enc[x])
 
 # def print_state_action_score(state, action, score):
 #     # print("Summary")
@@ -99,7 +96,7 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
         
 
     map_doc_local = {
-        e('minimap'): {e('height_map'): MessageToDict(height_map_minimap)},
+        'minimap': encode({'height_map': MessageToDict(height_map_minimap)}),
     }
 
     no_ops_actions = {} # a dict of action dics which is to be merged to actual macro actions.
@@ -177,7 +174,7 @@ def extract_macro_actions(controller, replay_data, map_data, player_id, macro_ac
             if len(new_actions) > 0:
                 # i.e. if they're not no-ops:
                 macro_states[str(frame_id)] = get_state(obs.observation, frame_id) # with this revamp, frame_id is unnecessary here.
-                macro_actions[str(frame_id)] = new_actions # storing the whole list.
+                macro_actions[str(frame_id)] =new_actions # storing the whole list.
                 macro_scores[str(frame_id)] = get_score(obs.observation)
 
             # _ = input(f"Press enter to go to the next frame (current frame: {frame_id})")
@@ -227,7 +224,7 @@ def main(unused):
         # }
 
         map_doc = {}
-        map_doc[e("starting_location")] = {}
+        map_doc["starting_location"] = {}
 
         for player_info in info.player_info:
             # print(player_info)
@@ -245,7 +242,7 @@ def main(unused):
             for key in map_doc_local:
                 map_doc[key] = map_doc_local[key]
 
-            map_doc[e("starting_location")][e(f"player_{player_id}")] = starting_location
+            map_doc["starting_location"][f"player_{player_id}"] = starting_location
 
             # Merging both
             states = {**no_ops_states, **macro_states}
@@ -272,15 +269,17 @@ def main(unused):
             # }
 
             player_info_doc = {
-                e('replay_name'): replay_file,
-                e('player_id'): player_id,
-                e('match_up'): match_up,
-                e('game_duration_loops'): info.game_duration_loops,
-                e('game_duration_seconds'): info.game_duration_seconds,
-                e('game_version'): info.game_version,
-                e('race'): str(player_info.player_info.race_actual).replace("1", "T").replace("2", "Z").replace("3", "P"),
-                e('result'): result
+                'replay_name': replay_file,
+                'player_id': player_id,
+                'match_up': match_up,
+                'game_duration_loops': info.game_duration_loops,
+                'game_duration_seconds': info.game_duration_seconds,
+                'game_version': info.game_version,
+                'race': str(player_info.player_info.race_actual).replace("1", "T").replace("2", "Z").replace("3", "P"),
+                'result': result
             }
+
+            player_info_doc = encode(player_info_doc)
 
             insert = player_collection.insert_many([player_info_doc, states, actions, scores])
             print(f"Successfully filled replay collection {collection_name}")
