@@ -6,27 +6,25 @@ It's a trade-off between modularity and running time. Doing it all in one for wo
 TO-DO: should I do everything using unit docs?, as it is, it mixes actual units (the outputs of
 	   observation.raw_data.units) with unit docs, using both of them instead of just one.
 '''
-from encoder import encoder
-enc = encoder()
-e = lambda x: 'e' + str(enc[x])
+from encoder import encode
 
 def get_unit_doc(unit):
-	return { #TO-DO: add human name.
-		e("tag"): unit.tag,
-		e("unit_type"): unit.unit_type,
-		e("alliance"): unit.alliance,
-		e("type"): unit.unit_type,
-		e("location"): {'x': unit.pos.x, 'y': unit.pos.y, 'z': unit.pos.z},
-		e("owner"): unit.owner,
-		e("health"): unit.health,
-		e("health_max"): unit.health_max,
-		e("shield"): unit.shield,
-		e("shield_max"): unit.shield_max,
-		e("energy"): unit.energy,
-		e("energy_max"): unit.energy_max,
-		e("build_progress"): unit.build_progress,
-		e("is_on_screen"): unit.is_on_screen
-	}
+	return encode({ #TO-DO: add human name.
+		"tag": unit.tag,
+		"unit_type": unit.unit_type,
+		"alliance": unit.alliance,
+		"type": unit.unit_type,
+		"location": {'x': unit.pos.x, 'y': unit.pos.y, 'z': unit.pos.z},
+		"owner": unit.owner,
+		"health": unit.health,
+		"health_max": unit.health_max,
+		"shield": unit.shield,
+		"shield_max": unit.shield_max,
+		"energy": unit.energy,
+		"energy_max": unit.energy_max,
+		"build_progress": unit.build_progress,
+		"is_on_screen": unit.is_on_screen
+	})
 
 def get_all_units(observation):
 	'''
