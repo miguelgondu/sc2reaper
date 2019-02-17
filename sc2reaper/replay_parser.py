@@ -123,9 +123,9 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
             new_actions = get_actions(obs, abilities)
             if len(new_actions) == 0:
                 # i.e. no op
-                no_ops_states[str(frame_id)] = encode(get_state(obs.observation, frame_id))
-                no_ops_actions[str(frame_id)] = encode(new_actions)
-                no_ops_scores[str(frame_id)] = encode(get_score(obs.observation))
+                no_ops_states[str(frame_id)] = get_state(obs.observation, frame_id)
+                no_ops_actions[str(frame_id)] = new_actions
+                no_ops_scores[str(frame_id)] = get_score(obs.observation)
             if len(new_actions) > 0:
                 # print("one or more macro actions was found")
                 macro_action_frames.append(frame_id - STEP_MULT)
@@ -173,9 +173,9 @@ def extract_macro_actions(controller, replay_data, map_data, player_id, macro_ac
             new_actions = get_actions(obs, abilities)
             if len(new_actions) > 0:
                 # i.e. if they're not no-ops:
-                macro_states[str(frame_id)] = encode(get_state(obs.observation, frame_id)) # with this revamp, frame_id is unnecessary here.
-                macro_actions[str(frame_id)] = encode(new_actions) # storing the whole list.
-                macro_scores[str(frame_id)] = encode(get_score(obs.observation))
+                macro_states[str(frame_id)] = get_state(obs.observation, frame_id) # with this revamp, frame_id is unnecessary here.
+                macro_actions[str(frame_id)] =new_actions # storing the whole list.
+                macro_scores[str(frame_id)] = get_score(obs.observation)
 
             # _ = input(f"Press enter to go to the next frame (current frame: {frame_id})")
             controller.step(1)
