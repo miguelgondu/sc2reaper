@@ -47,8 +47,6 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
     units_raw = controller.data_raw().units
     obs = controller.observe()
 
-    controller.step(1)
-    obs = controller.observe()
     # print(f"raw units: {obs.observation.raw_data.units}")
 
     # Extracting map information
@@ -143,26 +141,23 @@ def extract_macro_actions(
     obs = controller.observe()
     abilities = controller.data_raw().abilities
 
-    macro_actions = (
-        {}
-    )  # a dict of action dics which is to be merged to the other no-ops actions.
+    # a dict of action dics which is to be merged to the other no-ops actions.
+    macro_actions = {}
     macro_states = {}
     macro_scores = {}
     past_frame = obs.observation.game_loop
 
     for frame in macro_action_frames:
-        # print(f"I'm trying to get to frame {frame}, and I'm currently in frame {past_frame}")
         if past_frame == 0:
             controller.step(frame - past_frame)
         else:
             controller.step(
                 frame - past_frame - 1
-            )  # hot fix, I don't know why. There's just something special about 0.
+            )
         obs = controller.observe()
-        # print(f"After jumping {frame-past_frame} i'm at {obs.observation.game_loop}")
         assert obs.observation.game_loop == frame
 
-        for _ in range(STEP_MULT):  # is that +1 really necessary?
+        for _ in range(STEP_MULT):
             obs = controller.observe()
             frame_id = obs.observation.game_loop
 
