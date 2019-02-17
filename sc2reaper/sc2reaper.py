@@ -170,7 +170,6 @@ def extract_macro_actions(
                 macro_actions[str(frame_id)] = new_actions  # storing the whole list.
                 macro_scores[str(frame_id)] = get_score(obs.observation)
 
-            # _ = input(f"Press enter to go to the next frame (current frame: {frame_id})")
             controller.step(1)
 
         past_frame = obs.observation.game_loop
@@ -274,6 +273,11 @@ def ingest(replay_file):
                 .replace("3", "P"),
                 "result": result,
             }
+
+            players_collection
+            states_collection
+            actions_collection
+            scores_collection
 
             player_collection.insert_many(
                 encode([player_info_doc, states, actions, scores])
