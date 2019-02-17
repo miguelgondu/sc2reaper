@@ -4,166 +4,28 @@ import gzip
 import json
 import multiprocessing
 
-from google.protobuf.json_format import MessageToDict
+# from google.protobuf.json_format import MessageToDict
 from pymongo import MongoClient
 from pysc2 import run_configs
-from pysc2.lib import features, point
-from pysc2.lib.protocol import ProtocolError
-from s2clientprotocol import sc2api_pb2 as sc_pb
+# from pysc2.lib import features, point
+# from pysc2.lib.protocol import ProtocolError
+# from s2clientprotocol import sc2api_pb2 as sc_pb
 
+# from sc2reaper.action_extraction import get_actions, get_human_name
+# from sc2reaper.score_extraction import get_score
+# from sc2reaper.state_extraction import get_state
+# from sc2reaper.unit_extraction import get_unit_doc
 from sc2reaper.encoder import encode
-from sc2reaper.action_extraction import get_actions, get_human_name
-from sc2reaper.score_extraction import get_score
-from sc2reaper.state_extraction import get_state
-from sc2reaper.unit_extraction import get_unit_doc
+from sc2reaper.sweeper import extract_action_frames, extract_macro_actions
 
 STEP_MULT = 24
-size = point.Point(64, 64)
-interface = sc_pb.InterfaceOptions(
-    raw=True, score=True, feature_layer=sc_pb.SpatialCameraSetup(width=24)
-)
+# size = point.Point(64, 64)
+# interface = sc_pb.InterfaceOptions(
+#     raw=True, score=True, feature_layer=sc_pb.SpatialCameraSetup(width=24)
+# )
 
-size.assign_to(interface.feature_layer.resolution)
-size.assign_to(interface.feature_layer.minimap_resolution)
-
-
-def extract_action_frames(controller, replay_data, map_data, player_id):
-    """
-    This function runs through the replay once and extracts no-ops and a list
-    of frames in which macro actions started being taken. This list is then 
-    used in another function that runs through the replay another time and 
-    considers only those positions.
-    """
-    controller.start_replay(
-        sc_pb.RequestStartReplay(
-            replay_data=replay_data,
-            map_data=map_data,
-            options=interface,
-            observed_player_id=player_id,
-        )
-    )
-
-    abilities = controller.data_raw().abilities
-    units_raw = controller.data_raw().units
-    obs = controller.observe()
-
-    # print(f"raw units: {obs.observation.raw_data.units}")
-
-    # Extracting map information
-    height_map_minimap = obs.observation.feature_layer_data.minimap_renders.height_map
-    starting_location = None
-    for unit in obs.observation.raw_data.units:
-        unit_doc = get_unit_doc(unit)
-        # print(f'unit name : {units_raw[unit_doc["unit_type"]].name}')
-        if units_raw[unit_doc["unit_type"]].name in [
-            "CommandCenter",
-            "Nexus",
-            "Hatchery",
-        ]:
-            # print(f"I found a {units_raw[unit_doc['unit_type']].name}!")
-            if unit.alliance == 1:
-                starting_location = unit_doc["location"]
-                break
-
-    try:
-        assert starting_location != None
-    except AssertionError:
-        print("Wasn't able to determine a player's starting locations, weird")
-
-    minimap = {"minimap": {"height_map": MessageToDict(height_map_minimap)}}
-
-    actions = {}  # a dict of action dics which is to be merged to actual macro actions.
-    states = {}
-    scores = {}
-    # a list that will hold the frames in which macro actions START to take place. i.e. the left limit of the time interval.
-    active_frames = []
-
-    # Initialization of docs.
-    initial_frame = obs.observation.game_loop
-
-    new_actions = get_actions(obs.actions, abilities)
-    # print("I MEAN, THIS SHOULD BE PRINTED ALWAYS")
-    states[str(initial_frame)] = get_state(obs.observation, initial_frame)
-    actions[str(initial_frame)] = new_actions
-    scores[str(initial_frame)] = get_score(obs.observation)
-
-    # running through the replay
-    while True:
-        try:
-            controller.step(STEP_MULT)
-            obs = controller.observe()
-            frame_id = obs.observation.game_loop
-
-            new_actions = get_actions(obs.actions, abilities)
-            if len(new_actions) == 0:
-                # i.e. no op
-                states[str(frame_id)] = get_state(obs.observation, frame_id)
-                actions[str(frame_id)] = new_actions
-                scores[str(frame_id)] = get_score(obs.observation)
-            if len(new_actions) > 0:
-                # print("one or more macro actions was found")
-                active_frames.append(frame_id - STEP_MULT)
-
-        except ProtocolError:
-            obs = controller.observe()
-            print(f"last frame recorded: {obs.observation.game_loop}")
-            break
-
-    return (states, actions, scores, active_frames, minimap, starting_location)
-
-
-def extract_macro_actions(
-    controller, replay_data, map_data, player_id, macro_action_frames
-):
-    """
-    This function takes macro_action_frames and moves through the replay only considering the places
-    in which macro actions took place.
-    """
-    controller.start_replay(
-        sc_pb.RequestStartReplay(
-            replay_data=replay_data,
-            map_data=map_data,
-            options=interface,
-            observed_player_id=player_id,
-        )
-    )
-
-    obs = controller.observe()
-    abilities = controller.data_raw().abilities
-
-    # a dict of action dics which is to be merged to the other no-ops actions.
-    actions = {}
-    states = {}
-    scores = {}
-    past_frame = obs.observation.game_loop
-
-    for frame in macro_action_frames:
-        if past_frame == 0:
-            controller.step(frame - past_frame)
-        else:
-            controller.step(frame - past_frame - 1)
-        obs = controller.observe()
-        assert obs.observation.game_loop == frame
-
-        for _ in range(STEP_MULT):
-            obs = controller.observe()
-            frame_id = obs.observation.game_loop
-
-            new_actions = get_actions(obs.actions, abilities)
-            if len(new_actions) > 0:
-                # i.e. if they're not no-ops:
-                states[str(frame_id)] = get_state(
-                    obs.observation, frame_id
-                )  # with this revamp, frame_id is unnecessary here.
-                actions[str(frame_id)] = new_actions  # storing the whole list.
-                scores[str(frame_id)] = get_score(obs.observation)
-
-            controller.step(1)
-
-        past_frame = obs.observation.game_loop
-
-    return states, actions, scores
-
+# size.assign_to(interface.feature_layer.resolution)
+# size.assign_to(interface.feature_layer.minimap_resolution)
 
 def ingest(replay_file):
     run_config = run_configs.get()
@@ -180,7 +42,12 @@ def ingest(replay_file):
         # print(f"replay info: {info}")
         # Mongo experiments
         client = MongoClient("localhost", 27017)
-        db = client["replays_example_4"]
+        db = client["replays_database"]
+        replays_collection = db["replays"]
+        players_collection = db["players"]
+        states_collection = db["states"]
+        actions_collection = db["actions"]
+        scores_collection = db["scores"]
         # replay_collection = db["replays"]
 
         # Extracting general information for the replay document
@@ -202,14 +69,15 @@ def ingest(replay_file):
         # }
 
         map_doc = {}
+        map_doc["name"] = info.map_name
         map_doc["starting_location"] = {}
 
         for player_info in info.player_info:
             # print(player_info)
             player_id = player_info.player_info.player_id
-            collection_name = replay_file.split("/")[-1]
-            collection_name = collection_name.split(".")[0] + f"_{player_id}"
-            player_collection = db[collection_name]
+            # collection_name = replay_file.split("/")[-1]
+            # collection_name = collection_name.split(".")[0] + f"_{player_id}"
+            # player_collection = db[collection_name]
             # print(f"player info for player {player_id}: {player_info}")
             # Storing map information
 
@@ -248,26 +116,59 @@ def ingest(replay_file):
             #     e('scores'): scores
             # }
 
+
             player_info_doc = {
                 "replay_name": replay_file,
                 "player_id": player_id,
-                "match_up": match_up,
-                "game_duration_loops": info.game_duration_loops,
-                "game_duration_seconds": info.game_duration_seconds,
-                "game_version": info.game_version,
                 "race": str(player_info.player_info.race_actual)
                 .replace("1", "T")
                 .replace("2", "Z")
                 .replace("3", "P"),
-                "result": result,
+                "result": result
             }
 
-            players_collection
-            states_collection
-            actions_collection
-            scores_collection
+            states_documents = []
+            for frame in states:
+                state_doc = {
+                    "replay_name": replay_file,
+                    "player_id": player_id,
+                    "frame_id": int(frame),
+                    **states[frame]
+                }
+                states_documents.append(state_doc)
 
-            player_collection.insert_many(
-                encode([player_info_doc, states, actions, scores])
-            )
-            print(f"Successfully filled replay collection {collection_name}")
+            # print(f"actions: {actions}")
+            
+            actions_documents = [{
+                            "replay_name": replay_file,
+                            "player_id": player_id,
+                            "frame_id": frame,
+                            "actions": actions[frame]
+                        } for frame in actions]
+
+            scores_documents = []
+            for frame in scores:
+                score_doc = {
+                    "replay_name": replay_file,
+                    "player_id": player_id,
+                    "frame_id": int(frame),
+                    **scores[frame]
+                }
+                scores_documents.append(score_doc)
+
+            players_collection.insert(player_info_doc)
+            states_collection.insert_many(states_documents)
+            actions_collection.insert_many(actions_documents)
+            scores_collection.insert_many(scores_documents)
+
+        replay_doc = {
+            "replay_name": replay_file,
+            "match_up": match_up,
+            "game_duration_loops": info.game_duration_loops,
+            "game_duration_seconds": info.game_duration_seconds,
+            "game_version": info.game_version,
+            "map": map_doc,
+        }
+
+        replays_collection.insert(replay_doc)
+        print(f"Successfully filled all collections")

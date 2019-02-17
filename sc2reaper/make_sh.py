@@ -7,7 +7,7 @@ def main():
 
     with open("to_run.sh", mode="w") as to_run:
         for f in files[:10]:
-            to_run.write(f"python {script} -replay={f}\n")
+            to_run.write(f"sc2reaper ingest {f}\n")
 
 if __name__ == '__main__':
     main()
