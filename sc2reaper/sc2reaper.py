@@ -70,25 +70,22 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
     except AssertionError:
         print("Wasn't able to determine a player's starting locations, weird")
 
-    map_doc_local = {"minimap": {"height_map": MessageToDict(height_map_minimap)}}
+    minimap = {"minimap": {"height_map": MessageToDict(height_map_minimap)}}
 
-    no_ops_actions = (
-        {}
-    )  # a dict of action dics which is to be merged to actual macro actions.
-    no_ops_states = {}
-    no_ops_scores = {}
-    macro_action_frames = (
-        []
-    )  # a list that will hold the frames in which macro actions START to take place. i.e. the left limit of the time interval.
+    actions = {}  # a dict of action dics which is to be merged to actual macro actions.
+    states = {}
+    scores = {}
+    # a list that will hold the frames in which macro actions START to take place. i.e. the left limit of the time interval.
+    active_frames = []
 
     # Initialization of docs.
     initial_frame = obs.observation.game_loop
 
-    new_actions = get_actions(obs, abilities)
+    new_actions = get_actions(obs.actions, abilities)
     # print("I MEAN, THIS SHOULD BE PRINTED ALWAYS")
-    no_ops_states[str(initial_frame)] = get_state(obs.observation, initial_frame)
-    no_ops_actions[str(initial_frame)] = new_actions
-    no_ops_scores[str(initial_frame)] = get_score(obs.observation)
+    states[str(initial_frame)] = get_state(obs.observation, initial_frame)
+    actions[str(initial_frame)] = new_actions
+    scores[str(initial_frame)] = get_score(obs.observation)
 
     # running through the replay
     while True:
@@ -97,29 +94,22 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
             obs = controller.observe()
             frame_id = obs.observation.game_loop
 
-            new_actions = get_actions(obs, abilities)
+            new_actions = get_actions(obs.actions, abilities)
             if len(new_actions) == 0:
                 # i.e. no op
-                no_ops_states[str(frame_id)] = get_state(obs.observation, frame_id)
-                no_ops_actions[str(frame_id)] = new_actions
-                no_ops_scores[str(frame_id)] = get_score(obs.observation)
+                states[str(frame_id)] = get_state(obs.observation, frame_id)
+                actions[str(frame_id)] = new_actions
+                scores[str(frame_id)] = get_score(obs.observation)
             if len(new_actions) > 0:
                 # print("one or more macro actions was found")
-                macro_action_frames.append(frame_id - STEP_MULT)
+                active_frames.append(frame_id - STEP_MULT)
 
         except ProtocolError:
             obs = controller.observe()
             print(f"last frame recorded: {obs.observation.game_loop}")
             break
 
-    return (
-        no_ops_states,
-        no_ops_actions,
-        no_ops_scores,
-        macro_action_frames,
-        map_doc_local,
-        starting_location,
-    )
+    return (states, actions, scores, active_frames, minimap, starting_location)
 
 
 def extract_macro_actions(
@@ -142,18 +132,16 @@ def extract_macro_actions(
     abilities = controller.data_raw().abilities
 
     # a dict of action dics which is to be merged to the other no-ops actions.
-    macro_actions = {}
-    macro_states = {}
-    macro_scores = {}
+    actions = {}
+    states = {}
+    scores = {}
     past_frame = obs.observation.game_loop
 
     for frame in macro_action_frames:
         if past_frame == 0:
             controller.step(frame - past_frame)
         else:
-            controller.step(
-                frame - past_frame - 1
-            )
+            controller.step(frame - past_frame - 1)
         obs = controller.observe()
         assert obs.observation.game_loop == frame
 
@@ -161,20 +149,20 @@ def extract_macro_actions(
             obs = controller.observe()
             frame_id = obs.observation.game_loop
 
-            new_actions = get_actions(obs, abilities)
+            new_actions = get_actions(obs.actions, abilities)
             if len(new_actions) > 0:
                 # i.e. if they're not no-ops:
-                macro_states[str(frame_id)] = get_state(
+                states[str(frame_id)] = get_state(
                     obs.observation, frame_id
                 )  # with this revamp, frame_id is unnecessary here.
-                macro_actions[str(frame_id)] = new_actions  # storing the whole list.
-                macro_scores[str(frame_id)] = get_score(obs.observation)
+                actions[str(frame_id)] = new_actions  # storing the whole list.
+                scores[str(frame_id)] = get_score(obs.observation)
 
             controller.step(1)
 
         past_frame = obs.observation.game_loop
 
-    return macro_states, macro_actions, macro_scores
+    return states, actions, scores
 
 
 def ingest(replay_file):
@@ -226,15 +214,15 @@ def ingest(replay_file):
             # Storing map information
 
             # Extracting info from replays
-            no_ops_states, no_ops_actions, no_ops_scores, macro_action_frames, map_doc_local, starting_location = extract_action_frames(
+            no_ops_states, no_ops_actions, no_ops_scores, active_frames, minimap, starting_location = extract_action_frames(
                 controller, replay_data, map_data, player_id
             )
             macro_states, macro_actions, macro_scores = extract_macro_actions(
-                controller, replay_data, map_data, player_id, macro_action_frames
+                controller, replay_data, map_data, player_id, active_frames
             )
 
-            for key in map_doc_local:
-                map_doc[key] = map_doc_local[key]
+            for key in minimap:
+                map_doc[key] = minimap[key]
 
             map_doc["starting_location"][f"player_{player_id}"] = starting_location
 
