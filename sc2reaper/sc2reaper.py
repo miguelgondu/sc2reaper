@@ -7,25 +7,10 @@ import multiprocessing
 # from google.protobuf.json_format import MessageToDict
 from pymongo import MongoClient
 from pysc2 import run_configs
-# from pysc2.lib import features, point
-# from pysc2.lib.protocol import ProtocolError
-# from s2clientprotocol import sc2api_pb2 as sc_pb
 
-# from sc2reaper.action_extraction import get_actions, get_human_name
-# from sc2reaper.score_extraction import get_score
-# from sc2reaper.state_extraction import get_state
-# from sc2reaper.unit_extraction import get_unit_doc
-from sc2reaper.encoder import encode
 from sc2reaper.sweeper import extract_action_frames, extract_macro_actions
 
 STEP_MULT = 24
-# size = point.Point(64, 64)
-# interface = sc_pb.InterfaceOptions(
-#     raw=True, score=True, feature_layer=sc_pb.SpatialCameraSetup(width=24)
-# )
-
-# size.assign_to(interface.feature_layer.resolution)
-# size.assign_to(interface.feature_layer.minimap_resolution)
 
 def ingest(replay_file):
     run_config = run_configs.get()
@@ -60,26 +45,13 @@ def ingest(replay_file):
         match_up = str(player_1_race) + "v" + str(player_2_race)
         match_up = match_up.replace("1", "T").replace("2", "Z").replace("3", "P")
 
-        # replay_doc = {
-        #     e('replay_name'): replay_file,
-        #     e('match_up'): match_up,
-        #     e('game_duration_loops'): info.game_duration_loops,
-        #     e('game_duration_seconds'): info.game_duration_seconds,
-        #     e('game_version'): info.game_version
-        # }
-
         map_doc = {}
         map_doc["name"] = info.map_name
         map_doc["starting_location"] = {}
 
         for player_info in info.player_info:
-            # print(player_info)
             player_id = player_info.player_info.player_id
-            # collection_name = replay_file.split("/")[-1]
-            # collection_name = collection_name.split(".")[0] + f"_{player_id}"
-            # player_collection = db[collection_name]
-            # print(f"player info for player {player_id}: {player_info}")
-            # Storing map information
+            replay_id = replay_file.split("/")[-1].split(".")[0]
 
             # Extracting info from replays
             no_ops_states, no_ops_actions, no_ops_scores, active_frames, minimap, starting_location = extract_action_frames(
@@ -107,18 +79,9 @@ def ingest(replay_file):
             else:
                 result = 0
 
-            # player_doc = {
-            #     e('player_id'): player_id,
-            #     e('race'): str(player_info.player_info.race_actual).replace("1", "T").replace("2", "Z").replace("3", "P"),
-            #     e('result'): result,
-            #     e('states'): states,
-            #     e('actions'): actions,
-            #     e('scores'): scores
-            # }
-
-
             player_info_doc = {
                 "replay_name": replay_file,
+                "replay_id": replay_id,
                 "player_id": player_id,
                 "race": str(player_info.player_info.race_actual)
                 .replace("1", "T")
@@ -131,16 +94,16 @@ def ingest(replay_file):
             for frame in states:
                 state_doc = {
                     "replay_name": replay_file,
+                    "replay_id": replay_id,
                     "player_id": player_id,
                     "frame_id": int(frame),
                     **states[frame]
                 }
                 states_documents.append(state_doc)
 
-            # print(f"actions: {actions}")
-            
             actions_documents = [{
                             "replay_name": replay_file,
+                            "replay_id": replay_id,
                             "player_id": player_id,
                             "frame_id": frame,
                             "actions": actions[frame]
@@ -150,6 +113,7 @@ def ingest(replay_file):
             for frame in scores:
                 score_doc = {
                     "replay_name": replay_file,
+                    "replay_id": replay_id,
                     "player_id": player_id,
                     "frame_id": int(frame),
                     **scores[frame]
@@ -163,6 +127,7 @@ def ingest(replay_file):
 
         replay_doc = {
             "replay_name": replay_file,
+            "replay_id": replay_id,
             "match_up": match_up,
             "game_duration_loops": info.game_duration_loops,
             "game_duration_seconds": info.game_duration_seconds,
