@@ -1,51 +1,60 @@
-'''
+"""
 If I want to truly optimize the process, I should be running the for in observation.raw_data.units only once!
 
 It's a trade-off between modularity and running time. Doing it all in one for would be very spaghetti.
 
 TO-DO: should I do everything using unit docs?, as it is, it mixes actual units (the outputs of
 	   observation.raw_data.units) with unit docs, using both of them instead of just one.
-'''
-from encoder import encode
+"""
+
 
 def get_unit_doc(unit):
-	return encode({ #TO-DO: add human name.
-		"tag": unit.tag,
-		"unit_type": unit.unit_type,
-		"alliance": unit.alliance,
-		"type": unit.unit_type,
-		"location": {'x': unit.pos.x, 'y': unit.pos.y, 'z': unit.pos.z},
-		"owner": unit.owner,
-		"health": unit.health,
-		"health_max": unit.health_max,
-		"shield": unit.shield,
-		"shield_max": unit.shield_max,
-		"energy": unit.energy,
-		"energy_max": unit.energy_max,
-		"build_progress": unit.build_progress,
-		"is_on_screen": unit.is_on_screen
-	})
+    # TO-DO: add human name.
+    return {
+        "tag": unit.tag,
+        "unit_type": unit.unit_type,
+        "alliance": unit.alliance,
+        "type": unit.unit_type,
+        "location": {"x": unit.pos.x, "y": unit.pos.y, "z": unit.pos.z},
+        "owner": unit.owner,
+        "health": unit.health,
+        "health_max": unit.health_max,
+        "shield": unit.shield,
+        "shield_max": unit.shield_max,
+        "energy": unit.energy,
+        "energy_max": unit.energy_max,
+        "build_progress": unit.build_progress,
+        "is_on_screen": unit.is_on_screen,
+    }
+
 
 def get_all_units(observation):
-	'''
+    """
 	This function takes an observation and returns all units in the field.
-	'''
-	return [get_unit_doc(unit) for unit in observation.raw_data.units]
+	"""
+    return [get_unit_doc(unit) for unit in observation.raw_data.units]
+
 
 def get_allied_units(observation):
-	'''
+    """
 	This function takes an observation and returns all allied units in the field.
-	'''
-	return [get_unit_doc(unit) for unit in observation.raw_data.units if unit.alliance == 1]
+	"""
+    return [
+        get_unit_doc(unit) for unit in observation.raw_data.units if unit.alliance == 1
+    ]
+
 
 def get_all_enemy_units(observation):
-	'''
+    """
 	This function takes an observation and returns all enemy units in the field.
-	'''
-	return [get_unit_doc(unit) for unit in observation.raw_data.units if unit.alliance == 4] 
+	"""
+    return [
+        get_unit_doc(unit) for unit in observation.raw_data.units if unit.alliance == 4
+    ]
+
 
 def get_visible_enemy_units(observation, as_list=False, as_dict=True):
-	'''
+    """
 	This function takes an observation and returns a list of the enemy units that are
 	on screen and are visible.
 
@@ -54,32 +63,39 @@ def get_visible_enemy_units(observation, as_list=False, as_dict=True):
 
 	The definition of display_type can be found here:
 	https://github.com/Blizzard/s2client-proto/blob/master/s2clientprotocol/raw.proto#L55 
-	'''
-	if as_list == as_dict:
-		raise ValueError("One and only one of as_list and as_dict should be True")
+	"""
+    if as_list == as_dict:
+        raise ValueError("One and only one of as_list and as_dict should be True")
 
-	if as_list == True:
-		visible_enemy_units = []
-		for unit in observation.raw_data.units:
-			if unit.alliance == 4 and unit.is_on_screen:
-				if unit.display_type == 1 or (unit.display_type == 2 and unit.build_progress == 1):
-					visible_enemy_units.append(get_unit_doc(unit))
+    if as_list == True:
+        visible_enemy_units = []
+        for unit in observation.raw_data.units:
+            if unit.alliance == 4 and unit.is_on_screen:
+                if unit.display_type == 1 or (
+                    unit.display_type == 2 and unit.build_progress == 1
+                ):
+                    visible_enemy_units.append(get_unit_doc(unit))
 
-	if as_dict == True:
-		# TO-DO: fix this one, this is the root of all bugs.
-		visible_enemy_units = {}
-		for unit in observation.raw_data.units:
-			if unit.alliance == 4 and unit.is_on_screen:
-				if unit.display_type == 1 or (unit.display_type == 2 and unit.build_progress == 1):
-					if str(unit.unit_type) not in visible_enemy_units:
-						visible_enemy_units[str(unit.unit_type)] = [get_unit_doc(unit)]
-					else: 
-						visible_enemy_units[str(unit.unit_type)].append(get_unit_doc(unit))
+    if as_dict == True:
+        # TO-DO: fix this one, this is the root of all bugs.
+        visible_enemy_units = {}
+        for unit in observation.raw_data.units:
+            if unit.alliance == 4 and unit.is_on_screen:
+                if unit.display_type == 1 or (
+                    unit.display_type == 2 and unit.build_progress == 1
+                ):
+                    if str(unit.unit_type) not in visible_enemy_units:
+                        visible_enemy_units[str(unit.unit_type)] = [get_unit_doc(unit)]
+                    else:
+                        visible_enemy_units[str(unit.unit_type)].append(
+                            get_unit_doc(unit)
+                        )
 
-	return visible_enemy_units
+    return visible_enemy_units
+
 
 def get_seen_enemy_units(observation, last_seen):
-	'''
+    """
 	This function takes an observation and the last state (i.e. at time t-1).
 
 	It copies this last seen_enemy_units and adds all the units that are currently being seen and
@@ -95,41 +111,44 @@ def get_seen_enemy_units(observation, last_seen):
 	- For an LSTM, store only visible units, the network should be able to "remember" 
 	shortly which units where alive. Not storing tags should be fine.
 	- Test and fix this more thoroughly. (deadline: friday)
-	'''
+	"""
 
-	# Put new seen units
+    # Put new seen units
 
-	seen = last_seen.copy()
-	# print(f"seen: {seen}")
+    seen = last_seen.copy()
+    # print(f"seen: {seen}")
 
-	visible_enemy_units = get_visible_enemy_units(observation) # {unit type (str): [unit tags (ints)]}
-	for str_unit_type in visible_enemy_units:
-		if str_unit_type not in seen:
-			seen[str_unit_type] = []
+    visible_enemy_units = get_visible_enemy_units(
+        observation
+    )  # {unit type (str): [unit tags (ints)]}
+    for str_unit_type in visible_enemy_units:
+        if str_unit_type not in seen:
+            seen[str_unit_type] = []
 
-		for unit_doc in visible_enemy_units[str_unit_type]:
-			if unit_doc not in seen[str_unit_type]:
-				# print(f"unit {unit_tag} ({type(unit_tag)}) (of type {unit_type} ({type(unit_type)})) is new!")
-				seen[str_unit_type].append(unit_doc)
+        for unit_doc in visible_enemy_units[str_unit_type]:
+            if unit_doc not in seen[str_unit_type]:
+                # print(f"unit {unit_tag} ({type(unit_tag)}) (of type {unit_type} ({type(unit_type)})) is new!")
+                seen[str_unit_type].append(unit_doc)
 
-	# print(f"seen after adding currently visible units: {last_seen}")
+                # print(f"seen after adding currently visible units: {last_seen}")
 
-	# Remove killed units
+                # Remove killed units
 
-	all_enemy_units = get_all_enemy_units(observation) # already returns unit docs.
+    all_enemy_units = get_all_enemy_units(observation)  # already returns unit docs.
 
-	for str_unit_type in seen:
-		for unit_doc in seen[str_unit_type]:
-			if unit_doc not in all_enemy_units:
-				# print(f"removing unit {unit_tag} because it was killed.")
-				seen[str_unit_type].remove(unit_doc)
+    for str_unit_type in seen:
+        for unit_doc in seen[str_unit_type]:
+            if unit_doc not in all_enemy_units:
+                # print(f"removing unit {unit_tag} because it was killed.")
+                seen[str_unit_type].remove(unit_doc)
 
-	# print(f"seen after removing killed units: {seen}")
+                # print(f"seen after removing killed units: {seen}")
 
-	return seen
+    return seen
+
 
 def get_allied_units_in_progress(observation):
-	'''
+    """
 	This function takes an observation and returns a dictionary holding 
 	the current units in progress. This dictionary is built as follows
 
@@ -137,10 +156,10 @@ def get_allied_units_in_progress(observation):
 		(unit's type, unit's tag): unit's build progress
 	}
 	for each allied unit that has a build progress of less than 1.
-	'''
-	units_in_progress = {}
-	for unit in observation.raw_data.units:
-		if unit.alliance == 1 and unit.build_progress < 1:
-			units_in_progress[(unit.unit_type, unit.tag)] = unit.build_progress
+	"""
+    units_in_progress = {}
+    for unit in observation.raw_data.units:
+        if unit.alliance == 1 and unit.build_progress < 1:
+            units_in_progress[(unit.unit_type, unit.tag)] = unit.build_progress
 
-	return units_in_progress
+    return units_in_progress

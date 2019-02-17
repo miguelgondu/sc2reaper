@@ -76,15 +76,27 @@ ENCODER_KEYS = {
 DECODER_KEYS = {value: key for key, value in ENCODER_KEYS.items()}
 
 
-def encode(_dict):
+def encode(document):
     """
     Replaces the keys of a dict with numbers (for compression)
     """
-    return {ENCODER_KEYS[key]: value for key, value in _dict.items()}
+    if isinstance(document, list):
+        return [encode(item) for item in document]
+    if isinstance(document, dict):
+        return {
+            ENCODER_KEYS.get(key, key): encode(value) for key, value in document.items()
+        }
+    return document
 
 
-def decode(_dict):
+def decode(document):
     """
     Replaces numeric keys with human readable ones (for readability)
     """
-    return {DECODER_KEYS[key]: value for key, value in _dict.items()}
+    if isinstance(document, list):
+        return [decode(item) for item in document]
+    if isinstance(document, dict):
+        return {
+            DECODER_KEYS.get(key, key): encode(value) for key, value in document.items()
+        }
+    return document

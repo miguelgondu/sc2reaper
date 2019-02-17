@@ -1,6 +1,3 @@
-from sc2reaper.encoder import encode
-
-
 def get_score(observation):
     """
     This function returns a dict "score", holding:
@@ -19,56 +16,43 @@ def get_score(observation):
 
     score_obs = observation.score.score_details
 
-    # print(f"dir(score_obs): {dir(score_obs)}")
-    # print(f"score_obs: {score_obs}")
-
-    score["collection_rate"] = encode(
-        {
-            "minerals": score_obs.collection_rate_minerals,
-            "vespene": score_obs.collection_rate_vespene,
-        }
-    )
+    score["collection_rate"] = {
+        "minerals": score_obs.collection_rate_minerals,
+        "vespene": score_obs.collection_rate_vespene,
+    }
 
     score["idle_worker_time"] = score_obs.idle_worker_time
 
-    score["killed_minerals"] = encode(
-        {
-            "none": score_obs.killed_minerals.none,
-            "army": score_obs.killed_minerals.army,
-            "economy": score_obs.killed_minerals.economy,
-            "technology": score_obs.killed_minerals.technology,
-            "upgrade": score_obs.killed_minerals.upgrade,
-        }
-    )
+    score["killed_minerals"] = {
+        "none": score_obs.killed_minerals.none,
+        "army": score_obs.killed_minerals.army,
+        "economy": score_obs.killed_minerals.economy,
+        "technology": score_obs.killed_minerals.technology,
+        "upgrade": score_obs.killed_minerals.upgrade,
+    }
 
-    score["killed_vespene"] = encode(
-        {
-            "none": score_obs.killed_vespene.none,
-            "army": score_obs.killed_vespene.army,
-            "economy": score_obs.killed_vespene.economy,
-            "technology": score_obs.killed_vespene.technology,
-            "upgrade": score_obs.killed_vespene.upgrade,
-        }
-    )
+    score["killed_vespene"] = {
+        "none": score_obs.killed_vespene.none,
+        "army": score_obs.killed_vespene.army,
+        "economy": score_obs.killed_vespene.economy,
+        "technology": score_obs.killed_vespene.technology,
+        "upgrade": score_obs.killed_vespene.upgrade,
+    }
 
-    score["used_minerals"] = encode(
-        {
-            "none": score_obs.used_minerals.none,
-            "army": score_obs.used_minerals.army,
-            "economy": score_obs.used_minerals.economy,
-            "technology": score_obs.used_minerals.technology,
-            "upgrade": score_obs.used_minerals.upgrade,
-        }
-    )
+    score["used_minerals"] = {
+        "none": score_obs.used_minerals.none,
+        "army": score_obs.used_minerals.army,
+        "economy": score_obs.used_minerals.economy,
+        "technology": score_obs.used_minerals.technology,
+        "upgrade": score_obs.used_minerals.upgrade,
+    }
 
-    score["used_vespene"] = encode(
-        {
-            "none": score_obs.used_vespene.none,
-            "army": score_obs.used_vespene.army,
-            "economy": score_obs.used_vespene.economy,
-            "technology": score_obs.used_vespene.technology,
-            "upgrade": score_obs.used_vespene.upgrade,
-        }
-    )
+    score["used_vespene"] = {
+        "none": score_obs.used_vespene.none,
+        "army": score_obs.used_vespene.army,
+        "economy": score_obs.used_vespene.economy,
+        "technology": score_obs.used_vespene.technology,
+        "upgrade": score_obs.used_vespene.upgrade,
+    }
 
-    return encode(score)
+    return score

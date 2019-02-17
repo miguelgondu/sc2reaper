@@ -1,6 +1,3 @@
-from sc2reaper.encoder import encode
-
-
 def is_macro_action(unit_command_action, abilities):
     """
 	This function determines if a unit_command action is a macro action
@@ -76,6 +73,5 @@ def get_actions(obs, abilities):
                         "x": action.action_raw.unit_command.target_world_space_pos.x,
                         "y": action.action_raw.unit_command.target_world_space_pos.y,
                     }
-                macro_actions.append(encode(action_doc))
+                macro_actions.append(action_doc)
     return macro_actions
-
