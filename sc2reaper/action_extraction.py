@@ -1,7 +1,4 @@
-from encoder import encoder
-
-enc = encoder()
-e = lambda x: "e" + str(enc[x])
+from sc2reaper.encoder import encode
 
 
 def is_macro_action(unit_command_action, abilities):
@@ -59,32 +56,26 @@ def get_actions(obs, abilities):
 	"""
 
     actions = obs.actions
-    # print(f"actions in frame {obs.observation.game_loop}:")
-    # print(actions)
     macro_actions = []
     for action in actions:
         if hasattr(action, "action_raw") and hasattr(action.action_raw, "unit_command"):
             if is_macro_action(action.action_raw.unit_command, abilities):
-                a = action.action_raw.unit_command
-                # print(f"action {a} is macro! ({abilities[a.ability_id].button_name})")
                 action_doc = {}
                 if hasattr(action.action_raw.unit_command, "ability_id"):
-                    action_doc[
-                        e("ability_id")
-                    ] = action.action_raw.unit_command.ability_id
+                    action_doc["ability_id"] = action.action_raw.unit_command.ability_id
                 if hasattr(action.action_raw.unit_command, "unit_tags"):
-                    action_doc[e("unit_tags")] = [
+                    action_doc["unit_tags"] = [
                         tag for tag in action.action_raw.unit_command.unit_tags
                     ]
                 if hasattr(action.action_raw.unit_command, "target_unit_tag"):
                     action_doc[
-                        e("target_unit_tag")
+                        "target_unit_tag"
                     ] = action.action_raw.unit_command.target_unit_tag
                 if hasattr(action.action_raw.unit_command, "target_world_space_pos"):
-                    action_doc[e("target_world_space_pos")] = {
+                    action_doc["target_world_space_pos"] = {
                         "x": action.action_raw.unit_command.target_world_space_pos.x,
                         "y": action.action_raw.unit_command.target_world_space_pos.y,
                     }
-                macro_actions.append(action_doc)
+                macro_actions.append(encode(action_doc))
     return macro_actions
 
