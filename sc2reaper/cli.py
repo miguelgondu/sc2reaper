@@ -2,6 +2,8 @@
 import sys
 import click
 
+from sc2reaper import sc2reaper
+
 
 @click.group()
 def main(args=None):
@@ -18,7 +20,7 @@ def ingest(files, mongo_url):
     """
     click.echo(f"Storing replays in {mongo_url}")
     for _file in files:
-        click.echo(_file.name)
+        sc2reaper.ingest(_file)
 
 
 if __name__ == "__main__":
