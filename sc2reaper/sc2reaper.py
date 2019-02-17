@@ -57,14 +57,14 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
     for unit in obs.observation.raw_data.units:
         unit_doc = get_unit_doc(unit)
         # print(f'unit name : {units_raw[unit_doc["unit_type"]].name}')
-        if units_raw[unit_doc[e("unit_type")]].name in [
+        if units_raw[unit_doc["unit_type"]].name in [
             "CommandCenter",
             "Nexus",
             "Hatchery",
         ]:
             # print(f"I found a {units_raw[unit_doc['unit_type']].name}!")
             if unit.alliance == 1:
-                starting_location = unit_doc[e("location")]
+                starting_location = unit_doc["location"]
                 break
 
     try:

@@ -1,6 +1,6 @@
 """Console script for sc2reaper."""
 import sys
-import click
+import click 
 
 from sc2reaper import sc2reaper
 
@@ -18,10 +18,15 @@ def ingest(files, mongo_url):
     """
     Load a few replays into a mongo database.
     """
+    from absl import flags
+    import sys
+
+    FLAGS = flags.FLAGS
+    FLAGS(sys.argv)
     click.echo(f"Storing replays in {mongo_url}")
     for _file in files:
-        sc2reaper.ingest(_file)
+        sc2reaper.ingest(_file.name)
 
 
 if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+    main()  # pragma: no cover

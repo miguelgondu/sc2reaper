@@ -71,7 +71,7 @@ ENCODER_KEYS = {
     "technology": 63,
     "upgrade": 64,
 }
-
+ENCODER_KEYS = {key: str(value) for key, value in ENCODER_KEYS.items()}
 
 DECODER_KEYS = {value: key for key, value in ENCODER_KEYS.items()}
 
