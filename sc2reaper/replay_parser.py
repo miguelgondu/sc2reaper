@@ -2,7 +2,6 @@ import gzip
 import json
 import multiprocessing
 
-from absl import app, flags
 from google.protobuf.json_format import MessageToDict
 from pymongo import MongoClient
 from pysc2 import run_configs
@@ -16,9 +15,6 @@ from sc2reaper.score_extraction import get_score
 from sc2reaper.state_extraction import get_state
 from sc2reaper.unit_extraction import get_unit_doc
 
-FLAGS = flags.FLAGS
-flags.DEFINE_string("replay", None, "Name of replay in SC2/Replays.")
-
 STEP_MULT = 24
 size = point.Point(64, 64)
 interface = sc_pb.InterfaceOptions(
@@ -27,31 +23,6 @@ interface = sc_pb.InterfaceOptions(
 
 size.assign_to(interface.feature_layer.resolution)
 size.assign_to(interface.feature_layer.minimap_resolution)
-
-# def print_state_action_score(state, action, score):
-#     # print("Summary")
-#     print(f"frame: {state['frame_id']}")
-#     print("Resoruces:")
-#     print(state['resources'])
-#     print("Supply:")
-#     print(state['supply'])
-#     units_string = "Units:\n"
-#     for unit_type in state['units']:
-#         units_string += f"{unit_type}: {len(state['units'][unit_type])}, "
-#     units_string = units_string[:-2] + ""
-#     print(units_string)
-
-#     print("Units in progress:")
-#     print(state['units_in_progress'])
-
-#     print("Visible enemy units:")
-#     print(state['visible_enemy_units'])
-
-#     print("Action:")
-#     print(action)
-
-#     print("Score:")
-#     print(score)
 
 
 def extract_action_frames(controller, replay_data, map_data, player_id):
@@ -210,11 +181,10 @@ def extract_macro_actions(
     return macro_states, macro_actions, macro_scores
 
 
-def main(unused):
+def main(replay_file):
     run_config = run_configs.get()
 
     with run_config.start() as controller:
-        replay_file = FLAGS.replay
         print(f"Processing replay {replay_file}")
         replay_data = run_config.replay_data(replay_file)
         info = controller.replay_info(replay_data)
@@ -308,9 +278,8 @@ def main(unused):
                 "result": result,
             }
 
-            player_collection.insert_many(encode([player_info_doc, states, actions, scores]))
+            player_collection.insert_many(
+                encode([player_info_doc, states, actions, scores])
+            )
             print(f"Successfully filled replay collection {collection_name}")
 
-
-if __name__ == "__main__":
-    app.run(main)
