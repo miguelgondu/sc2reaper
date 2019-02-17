@@ -13,6 +13,10 @@ def ingest(replay_file):
         replay_data = run_config.replay_data(replay_file)
         info = controller.replay_info(replay_data)
 
+        if info.game_duration_loops < 500:
+            print(f"Replay {replay_file} is too short.")
+            return
+
         map_data = None
         if info.local_map_path:
             map_data = run_config.map_data(info.local_map_path)
@@ -76,8 +80,8 @@ def ingest(replay_file):
                 "replay_name": replay_file,
                 "replay_id": replay_id,
                 "player_id": player_id,
-                "player_mmr": info.player_info[player_id].player_mmr,
-                "player_apm": info.player_info[player_id].player_apm,
+                "player_mmr": info.player_info[player_id - 1].player_mmr,
+                "player_apm": info.player_info[player_id - 1].player_apm,
                 "race": str(player_info.player_info.race_actual)
                 .replace("1", "T")
                 .replace("2", "Z")
