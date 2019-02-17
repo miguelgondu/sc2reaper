@@ -129,4 +129,4 @@ def ingest(replay_file):
         }
 
         replays_collection.insert(replay_doc)
-        print(f"Successfully filled all collections")
+        print(f"Successfully filled all collections of replay {replay_file}")

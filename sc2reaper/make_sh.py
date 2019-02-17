@@ -1,7 +1,7 @@
 from glob import glob
 
 def main():
-    files = glob("/home/mgd/StarCraftII/Replays/*.SC2Replay")
+    files = glob("/mnt/disk/miguel/StarCraftII/Replays/*.SC2Replay")
     script = "replay_parser.py"
     print(f"files: {files}")
 

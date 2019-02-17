@@ -23,7 +23,7 @@ def ingest(files, mongo_url):
 
     FLAGS = flags.FLAGS
     FLAGS(sys.argv)
-    click.echo(f"Storing replays in {mongo_url}")
+    # click.echo(f"Storing replays in {mongo_url}")
     for _file in files:
         sc2reaper.ingest(_file.name)
 
