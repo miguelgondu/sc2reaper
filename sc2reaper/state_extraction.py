@@ -3,7 +3,7 @@ from sc2reaper import resources_extraction
 from sc2reaper import supply_extraction
 
 
-def get_state(observation, frame_id):
+def get_state(observation):
     """
     This function returns a state, defined as a dict holding
         - a frame counter
@@ -20,8 +20,6 @@ def get_state(observation, frame_id):
     state = {}
 
     # a.k.a game loop (or something similar when multiple actions are being stored)
-    state["frame_id"] = frame_id
-
     state["resources"] = {
         "minerals": resources_extraction.get_minerals(observation),
         "vespene": resources_extraction.get_vespene(observation),

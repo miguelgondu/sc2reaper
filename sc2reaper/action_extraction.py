@@ -34,12 +34,12 @@ def get_human_name(action_doc, abilities):
     return str(ability.link_name) + str(ability.button_name)
 
 
-def get_actions(obs, abilities):
+def get_actions(actions, abilities):
     """
 	This function is supposed to return macro actions from an observation.
 
 	Arguments:
-		-obs, an observation taken from a obs =  controller.observe()
+		-actions, actions for a given observation
 		-abilities, which is the result of controller.raw_data().abilities
 
 	Returns:
@@ -52,7 +52,6 @@ def get_actions(obs, abilities):
 		- clean the hasattr, it seems to be innecesary
 	"""
 
-    actions = obs.actions
     macro_actions = []
     for action in actions:
         if hasattr(action, "action_raw") and hasattr(action.action_raw, "unit_command"):
