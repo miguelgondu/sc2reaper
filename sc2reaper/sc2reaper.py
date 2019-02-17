@@ -76,6 +76,8 @@ def ingest(replay_file):
                 "replay_name": replay_file,
                 "replay_id": replay_id,
                 "player_id": player_id,
+                "player_mmr": info.player_info[player_id].player_mmr,
+                "player_apm": info.player_info[player_id].player_apm,
                 "race": str(player_info.player_info.race_actual)
                 .replace("1", "T")
                 .replace("2", "Z")
