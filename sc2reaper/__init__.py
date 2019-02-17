@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Top-level package for SC2 Reaper."""
 
 __author__ = """Miguel González Duque"""

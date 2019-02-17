@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Console script for sc2reaper."""
 import sys
 import click
@@ -12,13 +10,13 @@ def main(args=None):
 
 
 @main.command()
-@click.argument('files', nargs=-1, type=click.File('r'))
-@click.option('--mongo-url', '-m', type=str, default=None, help="MongoDB URL.")
+@click.argument("files", nargs=-1, type=click.File("r"))
+@click.option("--mongo-url", "-m", type=str, default=None, help="MongoDB URL.")
 def ingest(files, mongo_url):
     """
     Load a few replays into a mongo database.
     """
-    click.echo(f'Storing replays in {mongo_url}')
+    click.echo(f"Storing replays in {mongo_url}")
     for _file in files:
         click.echo(_file.name)
 
