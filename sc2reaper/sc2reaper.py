@@ -3,7 +3,9 @@
 from pymongo import MongoClient
 from pysc2 import run_configs
 
-from sc2reaper.sweeper import extract_action_frames, extract_macro_actions
+from sc2reaper.sweeper import extract_all_info_once
+
+MATCH_UPS = ["TvZ", "ZvT"]
 
 def ingest(replay_file):
     run_config = run_configs.get()
@@ -23,13 +25,6 @@ def ingest(replay_file):
 
         # print(f"replay info: {info}")
         # Mongo experiments
-        client = MongoClient("localhost", 27017)
-        db = client["replays_database"]
-        replays_collection = db["replays"]
-        players_collection = db["players"]
-        states_collection = db["states"]
-        actions_collection = db["actions"]
-        scores_collection = db["scores"]
         # replay_collection = db["replays"]
 
         # Extracting general information for the replay document
@@ -42,31 +37,33 @@ def ingest(replay_file):
         match_up = str(player_1_race) + "v" + str(player_2_race)
         match_up = match_up.replace("1", "T").replace("2", "Z").replace("3", "P")
 
+        if match_up not in MATCH_UPS:
+            print(f"Match-up {match_up} is not in {MATCH_UPS}")
+            return
+
         map_doc = {}
         map_doc["name"] = info.map_name
         map_doc["starting_location"] = {}
+
+        client = MongoClient("localhost", 27017)
+        db = client["replays_database_TvZ"]
+        replays_collection = db["replays"]
+        players_collection = db["players"]
+        states_collection = db["states"]
+        actions_collection = db["actions"]
+        scores_collection = db["scores"]
 
         for player_info in info.player_info:
             player_id = player_info.player_info.player_id
             replay_id = replay_file.split("/")[-1].split(".")[0]
 
             # Extracting info from replays
-            no_ops_states, no_ops_actions, no_ops_scores, active_frames, minimap, starting_location = extract_action_frames(
-                controller, replay_data, map_data, player_id
-            )
-            macro_states, macro_actions, macro_scores = extract_macro_actions(
-                controller, replay_data, map_data, player_id, active_frames
-            )
+            states, actions, scores, minimap, starting_location = extract_all_info_once(controller, replay_data, map_data, player_id)
 
             for key in minimap:
                 map_doc[key] = minimap[key]
 
             map_doc["starting_location"][f"player_{player_id}"] = starting_location
-
-            # Merging both
-            states = {**no_ops_states, **macro_states}
-            actions = {**no_ops_actions, **macro_actions}
-            scores = {**no_ops_scores, **macro_scores}
 
             result = None
             if player_info.player_result.result == 1:
@@ -104,7 +101,7 @@ def ingest(replay_file):
                             "replay_name": replay_file,
                             "replay_id": replay_id,
                             "player_id": player_id,
-                            "frame_id": frame,
+                            "frame_id": int(frame),
                             "actions": actions[frame]
                         } for frame in actions]
 
@@ -135,4 +132,4 @@ def ingest(replay_file):
         }
 
         replays_collection.insert(replay_doc)
-        print(f"Successfully filled all collections of replay {replay_file}")
+        print(f"Successfully filled all collections of replay {replay_id}")

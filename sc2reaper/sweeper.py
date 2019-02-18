@@ -10,7 +10,7 @@ from sc2reaper.score_extraction import get_score
 from sc2reaper.state_extraction import get_state
 from sc2reaper.unit_extraction import get_unit_doc
 
-STEP_MULT = 24
+STEP_MULT = 12
 
 size = point.Point(64, 64)
 interface = sc_pb.InterfaceOptions(
@@ -19,6 +19,72 @@ interface = sc_pb.InterfaceOptions(
 
 size.assign_to(interface.feature_layer.resolution)
 size.assign_to(interface.feature_layer.minimap_resolution)
+
+def extract_all_info_once(controller, replay_data, map_data, player_id):
+    controller.start_replay(
+        sc_pb.RequestStartReplay(
+            replay_data=replay_data,
+            map_data=map_data,
+            options=interface,
+            observed_player_id=player_id,
+        )
+    )
+
+    abilities = controller.data_raw().abilities
+    units_raw = controller.data_raw().units
+    obs = controller.observe()
+
+    # Extracting map information
+    height_map_minimap = obs.observation.feature_layer_data.minimap_renders.height_map
+    starting_location = None
+    for unit in obs.observation.raw_data.units:
+        unit_doc = get_unit_doc(unit)
+        # print(f'unit name : {units_raw[unit_doc["unit_type"]].name}')
+        if units_raw[unit_doc["unit_type"]].name in [
+            "CommandCenter",
+            "Nexus",
+            "Hatchery",
+        ]:
+            # print(f"I found a {units_raw[unit_doc['unit_type']].name}!")
+            if unit.alliance == 1:
+                starting_location = unit_doc["location"]
+                break
+
+    try:
+        assert starting_location != None
+    except AssertionError:
+        print("Wasn't able to determine a player's starting locations, weird")
+
+    minimap = {"minimap": {"height_map": MessageToDict(height_map_minimap)}}
+
+    actions = {}  # a dict of action dics which is to be merged to actual macro actions.
+    states = {}
+    scores = {}
+
+    initial_frame = obs.observation.game_loop
+
+    # print("I MEAN, THIS SHOULD BE PRINTED ALWAYS")
+    states[str(initial_frame)] = get_state(obs.observation)
+    actions[str(initial_frame)] = get_actions(obs.actions, abilities)
+    scores[str(initial_frame)] = get_score(obs.observation)
+
+    # running through the replay
+    while True:
+        try:
+            controller.step(STEP_MULT)
+            obs = controller.observe()
+            frame_id = obs.observation.game_loop
+
+            states[str(frame_id)] = get_state(obs.observation)
+            actions[str(frame_id)] = get_actions(obs.actions, abilities)
+            scores[str(frame_id)] = get_score(obs.observation)
+
+        except ProtocolError:
+            obs = controller.observe()
+            print(f"last frame recorded: {obs.observation.game_loop}")
+            break
+
+    return (states, actions, scores, minimap, starting_location)
 
 
 def extract_action_frames(controller, replay_data, map_data, player_id):
