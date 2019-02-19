@@ -41,6 +41,8 @@ def get_state(observation):
     }
 
     # Units in progress
+    
+    ## Adding buildings in progress
     state["units_in_progress"] = {}
     units_in_progress = unit_extraction.get_allied_units_in_progress(observation)
     for unit_type, unit_tag in units_in_progress:
@@ -53,7 +55,6 @@ def get_state(observation):
                 str(unit_tag)
             ] = units_in_progress[unit_type, unit_tag]
 
-    state["units_in_progress"] = state["units_in_progress"]
 
     # Visible enemy units (enemy units on screen)
     visible_enemy_units = unit_extraction.get_visible_enemy_units(observation)
@@ -61,5 +62,8 @@ def get_state(observation):
         str(unit_type): visible_enemy_units[unit_type]
         for unit_type in visible_enemy_units
     }
+
+    state["upgrades"] = [upgrade for upgrade in observation.raw_data.player.upgrade_ids]
+    print(f"{observation.game_loop}: {observation.raw_data.player.upgrade_ids}")
 
     return state
