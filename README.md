@@ -53,7 +53,16 @@ Usage
 	-	[`MATCH_UPS`](https://github.com/miguelgondu/sc2reaper/blob/1a67e39d5ca43080edfc1ba0122c7338d435d2a4/sc2reaper/sc2reaper.py#L8), which is a list of the match-ups you're interested in. The defaults are "TvZ" and "ZvT". Leave it empty to consider all match-ups.
 	- 	[The name of your database in `client["replay_database_name"]`](https://github.com/miguelgondu/sc2reaper/blob/1a67e39d5ca43080edfc1ba0122c7338d435d2a4/sc2reaper/sc2reaper.py#L49). This is the name that the database will have in the `mongod` instance. Also change the url in `client = pymongo.MongoClient(...)` if your `mongod` instance isn't running on the default 27017 port.
 2. Change the amount of frames you want to go though in each step by going to [`sweeper.py`](https://github.com/miguelgondu/sc2reaper/blob/master/sc2reaper/sweeper.py) and changing [`STEP_MULT`](https://github.com/miguelgondu/sc2reaper/blob/1a67e39d5ca43080edfc1ba0122c7338d435d2a4/sc2reaper/sweeper.py#L13).
-3. You should be ready to run `sc2reaper ingest path_to_replay_file.SC2Replay`. After the process ends, the data should be stored in your mongo database.
+3. You should be ready to run 
+
+```sc2reaper ingest path_to_replay_file.SC2Replay```
+
+After the process ends, the data should be stored in your mongo database.
+
+Usage of the database
+---------------------
+
+After ingesting the replays you want to process, you will have a database stored in the path in which your `mongod` was storing the data. [This documentation](https://github.com/miguelgondu/sc2reaper/blob/master/using_sc2reaper_database.md) shows how the default database is constructed and how you can use pymongo to extract relevant information. 
 
 Future work (coming soon)
 -------------------------
