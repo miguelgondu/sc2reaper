@@ -4,8 +4,7 @@ from s2clientprotocol import sc2api_pb2 as sc_pb
 
 from google.protobuf.json_format import MessageToDict
 
-from sc2reaper.encoder import encode
-from sc2reaper.action_extraction import get_actions, get_human_name
+from sc2reaper.action_extraction import get_actions
 from sc2reaper.score_extraction import get_score
 from sc2reaper.state_extraction import get_state
 from sc2reaper.unit_extraction import get_unit_doc
@@ -39,13 +38,11 @@ def extract_all_info_once(controller, replay_data, map_data, player_id):
     starting_location = None
     for unit in obs.observation.raw_data.units:
         unit_doc = get_unit_doc(unit)
-        # print(f'unit name : {units_raw[unit_doc["unit_type"]].name}')
         if units_raw[unit_doc["unit_type"]].name in [
             "CommandCenter",
             "Nexus",
             "Hatchery",
         ]:
-            # print(f"I found a {units_raw[unit_doc['unit_type']].name}!")
             if unit.alliance == 1:
                 starting_location = unit_doc["location"]
                 break
@@ -63,7 +60,6 @@ def extract_all_info_once(controller, replay_data, map_data, player_id):
 
     initial_frame = obs.observation.game_loop
 
-    # print("I MEAN, THIS SHOULD BE PRINTED ALWAYS")
     states[str(initial_frame)] = get_state(obs.observation)
     actions[str(initial_frame)] = get_actions(obs.actions, abilities)
     scores[str(initial_frame)] = get_score(obs.observation)
@@ -93,6 +89,9 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
     of frames in which macro actions started being taken. This list is then 
     used in another function that runs through the replay another time and 
     considers only those positions.
+
+    It isn't being used in the replay ingestion process, but it could be if
+    you want to only go through macro actions in their exact frames.
     """
     controller.start_replay(
         sc_pb.RequestStartReplay(
@@ -107,20 +106,16 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
     units_raw = controller.data_raw().units
     obs = controller.observe()
 
-    # print(f"raw units: {obs.observation.raw_data.units}")
-
     # Extracting map information
     height_map_minimap = obs.observation.feature_layer_data.minimap_renders.height_map
     starting_location = None
     for unit in obs.observation.raw_data.units:
         unit_doc = get_unit_doc(unit)
-        # print(f'unit name : {units_raw[unit_doc["unit_type"]].name}')
         if units_raw[unit_doc["unit_type"]].name in [
             "CommandCenter",
             "Nexus",
             "Hatchery",
         ]:
-            # print(f"I found a {units_raw[unit_doc['unit_type']].name}!")
             if unit.alliance == 1:
                 starting_location = unit_doc["location"]
                 break
@@ -135,6 +130,7 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
     actions = {}  # a dict of action dics which is to be merged to actual macro actions.
     states = {}
     scores = {}
+
     # a list that will hold the frames in which macro actions START to take place. i.e. the left limit of the time interval.
     active_frames = []
 
@@ -142,7 +138,6 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
     initial_frame = obs.observation.game_loop
 
     new_actions = get_actions(obs.actions, abilities)
-    # print("I MEAN, THIS SHOULD BE PRINTED ALWAYS")
     states[str(initial_frame)] = get_state(obs.observation)
     actions[str(initial_frame)] = new_actions
     scores[str(initial_frame)] = get_score(obs.observation)
@@ -161,7 +156,6 @@ def extract_action_frames(controller, replay_data, map_data, player_id):
                 actions[str(frame_id)] = new_actions
                 scores[str(frame_id)] = get_score(obs.observation)
             if len(new_actions) > 0:
-                # print("one or more macro actions was found")
                 active_frames.append(frame_id - STEP_MULT)
 
         except ProtocolError:
@@ -176,8 +170,8 @@ def extract_macro_actions(
     controller, replay_data, map_data, player_id, macro_action_frames
 ):
     """
-    This function takes macro_action_frames and moves through the replay only considering the places
-    in which macro actions took place.
+    This function takes macro_action_frames (given by extract_action_frames) and moves through
+    the replay only considering the places in which macro actions took place.
     """
     controller.start_replay(
         sc_pb.RequestStartReplay(

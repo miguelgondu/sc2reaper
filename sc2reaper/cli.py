@@ -12,21 +12,21 @@ def main(args=None):
 
 
 @main.command()
-@click.argument("files", nargs=-1, type=click.File("r"))
-@click.option("--mongo-url", "-m", type=str, default=None, help="MongoDB URL.")
-def ingest(files, mongo_url):
+@click.argument("file", nargs=1, type=click.File("r"))
+# @click.option("--mongo-url", "-m", type=str, default=None, help="MongoDB URL.")
+def ingest(file):
     """
-    Load a few replays into a mongo database.
+    Load a replay into a mongo database.
     """
+    # So that pysc2 runs:
     from absl import flags
     import sys
 
     FLAGS = flags.FLAGS
     FLAGS(sys.argv)
-    # click.echo(f"Storing replays in {mongo_url}")
-    for _file in files:
-        sc2reaper.ingest(_file.name)
 
+    # Ingesting the replay
+    sc2reaper.ingest(file.name)
 
 if __name__ == "__main__":
     main()  # pragma: no cover

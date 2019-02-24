@@ -1,0 +1,209 @@
+# Using sc2reaper's database
+
+Once you've run sc2reaper on your replay files, you'll store a database in the MongoDB instance you were running. This tutorial will show how this database is structured and how to query information that you would want to extract.
+
+## The (default) structure of the database.
+
+`replays_database` holds the following collections:
+
+- `replays`
+- `players`
+- `states`
+- `actions`
+- `states`
+
+Let's explain in more detail what each of these hold:
+
+### replays
+
+In the `replays` collection, you can find documents that hold the relevant general information about a replay, such as the name of the file, the `replay_id`, the duration of the game, the matchup. More precisely, this is how each `replay_doc` is defined in the collection:
+
+```python
+replay_doc = {
+            "replay_name": replay_file, # the whole path to the file
+            "replay_id": replay_id, # the name of the replay (without .SC2Replay)
+            "match_up": match_up,
+            "game_duration_loops": amount_of_loops,
+            "game_duration_seconds": amount_of_seconds,
+            "game_version": game_version,
+            "map": map_doc
+        }
+```
+
+Each time a replay is ingested, a `replay_doc` is saved in this collection.
+
+### players
+
+The `players` collection stores two `player_doc`s per replay, holding the following information:
+
+```python
+player_doc = {
+                "replay_name": replay_file,
+                "replay_id": replay_id,
+                "player_id": player_id, #1 or 2
+                "player_mmr": player_mmr,
+                "player_apm": player_apm,
+                "race": race, # "T", "Z" or "P"
+                "result": result # 1, -1 or 0
+            }
+```
+
+### states
+
+In `states` you will find `state_doc`uments, which are built as follows:
+
+```python
+state_doc = {
+    # ids for localization
+    "replay_name": replay_file,
+    "replay_id": replay_id,
+    "player_id": player_id,
+    "frame_id": the_actual_frame,
+    # actual frame statistics
+    "resources": a_dict_of_resources,
+    "supply": a_dict_of_supplies,
+    "units": a_dict_of_friendly_units,
+    "units_in_progress": a_dict_of_BUILDINGS_in_progress,
+    "visible_enemy_units": a_dict_of_visible_enemy_units,
+    "upgrades": a_list_of_upgrades
+    }
+```
+
+for more information on how these dicts are built, i.e. what the state abstraction is and how you can modify it, check [this file](https://github.com/miguelgondu/sc2reaper/blob/master/sc2reaper/state_extraction.py). Every time a replay is ingested, several `state_docs` are stored: one per relevant frame (see [STEP_MULT](https://github.com/miguelgondu/sc2reaper/blob/1a67e39d5ca43080edfc1ba0122c7338d435d2a4/sc2reaper/sweeper.py#L13) in sweeper.py).
+
+### actions
+
+`actions` stores one `action_doc` per (relevant) frame. These look like this:
+
+```python
+action_doc = {
+            "replay_name": replay_file,
+            "replay_id": replay_id,
+            "player_id": player_id,
+            "frame_id": frame,
+            "actions": a_list_of_actions_performed
+            }
+```
+
+Moreover, the elements in this list of actions performed are a particular type of document whose keys are `["ability_id", "unit_tags", "target_unit_tag", "target_world_space_pos"]`. In order to know what the `"ability_id"` means, we suggest checking the stableid.json (which can be found in your StarCraftII folder in Documents) or using `controller.data_raw` as is used [here](https://github.com/miguelgondu/sc2reaper/blob/7be246de515c4b1578da94523901e0288ab0909e/sc2reaper/sweeper.py#L33).
+
+### scores
+
+Finally, the `scores` collection stores several `score_doc`s per replay, one per relevant frame. A `score_doc` is defined as:
+
+```python
+score_doc = {
+            "replay_name": replay_file,
+            "replay_id": replay_id,
+            "player_id": player_id,
+            "frame_id": frame,
+            "collection_rate": a_dict_of_coll_rate,
+            "idle_worker_time": idle_worker_time,
+            "killed_minerals": a_dict_of_killed_minerals,
+            "killed_vespene": a_dict_of_killed_vespene,
+            "used_minerals": a_dict_of_used_minerals,
+            "used_vespene": a_dict_of_used_vespene,
+            }
+```
+
+## Querying this information from the database
+
+In this tutorial, I assume there's already a `mongod` service running in the background in which your database is stored. I will assume it's the usual `27017` port.
+
+### The relevant ids
+
+Notice that, due to how the docs are stored, the relevant ids are `replay_id`, `player_id` and `frame_id`. Say you wanted to access the state of the game for player `i` at frame `t` in replay `r`, then you'll have to find the `state_doc` in `states_collection` such that `replay_id == r`, `player_id == i` and `frame_id == t`. This can be easily done using `pymongo`.
+
+### Using pymongo
+
+I'll go through some of the basics of pymongo for the specific example of the database generated by `sc2reaper`. Feel free to jump to the end of this section if you want all the code.
+
+#### Importing, accessing and indexing
+
+Start by importing `pymongo`:
+
+```python
+import pymongo
+```
+
+After importing it, you can connect to the running instance of `mongod` by creating an instance of `MongoClient`:
+
+```python
+client = pymongo.MongoClient()
+```
+
+By passing no arguments, it assumes you're trying to connect to the usual 27017 port. Feel free to pass the address of your instance as an argument if you need to. This client object allows us to access the database as follows:
+
+```python
+db = client["replays_database"]
+```
+
+Now you can access every collection by using its name as a key, namely,
+
+```python
+replays = db["replays"]
+players = db["players"]
+states = db["states"]
+actions = db["actions"]
+scores = db["scores"]
+```
+
+As we have discussed, the main indices that we'll be querying over are `replay_id` and `frame_id`. In order to reduce look-up time, we need to create them as indices in our collections.
+
+```python
+replays.create_index("replay_id")
+players.create_index("replay_id")
+states.create_index([("replay_id", pymongo.ASCENDING), ("frame_id", pymongo.ASCENDING)])
+actions.create_index([("replay_id", pymongo.ASCENDING), ("frame_id", pymongo.ASCENDING)])
+scores.create_index([("replay_id", pymongo.ASCENDING), ("frame_id", pymongo.ASCENDING)])
+```
+
+This process takes quite a while, but after it finishes, all look-ups should run way faster. Think of it as doing a very big amount of work being done just once, instead of doing big amount of work several times. 
+
+#### Example 1: Getting all replay ids
+
+Let's create a list of all `replay_id`s so that we can iterate over it. Recall that every MongoDB collection has the method `.find(d1, d2)`. This function takes two dicts `d1` and `d2`, where `d1` can hold requirements for some of the entries (such as `{replay_id: some_specific_id}`) and `d2` indicates the information that we want from the document (for a better explanation of pymongo, [check this tutorial](https://www.datacamp.com/community/tutorials/introduction-mongodb-python)). Finally, the function returns a `cursor` which we can iterate over. For example, in order to get all replay ids we can run the following loop:
+
+```python
+replay_ids = []
+for replay_doc in replays.find({}, {"replay_id": 1}):
+	replay_ids.append(replay_doc["replay_id"])
+```
+
+or in more pythonic fashion
+
+```python
+replay_ids = [replay["replay_id"] for replay in replays.find({}, {"replay_id": 1})]
+```
+
+Notice that, by leaving the first dict empty, we're iterating over **all** replay docs.
+
+#### Example 2: Getting all player's APMs
+
+We can use these `replay_ids` to find all players APMs. What do we need to do?, for each `replay_id` we need find the `player_doc`s such that `player_doc["replay_id"] == replay_id` and, in these, we need to store `player_doc["player_apm"]`. I will create a dictionary whose keys are `replay_id`s and values are tables `{1: player 1's apm, 2: player 2's apm}`. Using `.find()` we can find the `player_doc`s we need easily:
+
+```python
+players_apm = {}
+for replay_id in replay_ids:
+	players_apm[replay_id] = {}
+	for player_id in [1, 2]:
+		cursor = players.find({'replay_id': replay_id, 'player_id': player_id})
+		for player_doc in cursor:
+			players_apm[replay_id][player_id] = player_doc["player_apm"]
+```
+
+#### Example 3: Gathering all supply information for a player in a single replay
+
+As another example, say we want to extract all the `supply` information of player 1 in a single replay. We can do so by querying the right condition. As an example, suppose that we are tackling the last replay on the `replay_ids` list:
+```python
+replay_1 = replay_ids[-1]
+for state in states.find({"replay_id": replay_1, "player_id": 1}).sort("frame_id", 1):
+	print(f'frame: {state["frame_id"]}, supply: {state["supply"]}')
+```
+
+Notice that, with `.sort`, we can sort the frames in increasing order.
+
+
+## Conclusion
+
+After creating a dataset by ingesting several replays using `sc2reaper`, you can extract the information you want from the mongoDB database using `pymongo`. This tutorial explains how the (default) database stores the data from these replays. Remember that `sc2reaper` is a template, and that you could modify the way in which states, actions and scores are stored.

@@ -23,41 +23,40 @@ def ingest(replay_file):
         if info.local_map_path:
             map_data = run_config.map_data(info.local_map_path)
 
-        # print(f"replay info: {info}")
-        # Mongo experiments
-        # replay_collection = db["replays"]
-
         # Extracting general information for the replay document
 
         ## Extracting the Match-up
-
         player_1_race = info.player_info[0].player_info.race_actual
         player_2_race = info.player_info[1].player_info.race_actual
 
         match_up = str(player_1_race) + "v" + str(player_2_race)
         match_up = match_up.replace("1", "T").replace("2", "Z").replace("3", "P")
 
-        if match_up not in MATCH_UPS:
-            print(f"Match-up {match_up} is not in {MATCH_UPS}")
-            return
+        if len(MATCH_UPS) > 0:
+            if match_up not in MATCH_UPS:
+                print(f"Match-up {match_up} is not in {MATCH_UPS}")
+                return 
 
+        ## Extracting map information
         map_doc = {}
         map_doc["name"] = info.map_name
         map_doc["starting_location"] = {}
 
+        # Entering the mongo instance
         client = MongoClient("localhost", 27017)
-        db = client["replays_database_TvZ"]
+        db = client["replay_database"]
         replays_collection = db["replays"]
         players_collection = db["players"]
         states_collection = db["states"]
         actions_collection = db["actions"]
         scores_collection = db["scores"]
 
+        # Running the replay for each player
         for player_info in info.player_info:
             player_id = player_info.player_info.player_id
             replay_id = replay_file.split("/")[-1].split(".")[0]
 
-            # Extracting info from replays
+            # Extracting info from replays for a player
             states, actions, scores, minimap, starting_location = extract_all_info_once(controller, replay_data, map_data, player_id)
 
             for key in minimap:
@@ -73,7 +72,7 @@ def ingest(replay_file):
             else:
                 result = 0
 
-            player_info_doc = {
+            player_doc = {
                 "replay_name": replay_file,
                 "replay_id": replay_id,
                 "player_id": player_id,
@@ -116,7 +115,7 @@ def ingest(replay_file):
                 }
                 scores_documents.append(score_doc)
 
-            players_collection.insert(player_info_doc)
+            players_collection.insert(player_doc)
             states_collection.insert_many(states_documents)
             actions_collection.insert_many(actions_documents)
             scores_collection.insert_many(scores_documents)

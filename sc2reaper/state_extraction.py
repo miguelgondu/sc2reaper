@@ -14,6 +14,13 @@ def get_state(observation):
         - allied units in progress (in "units_in_progress")
         - visible enemy units
         - seen enemy units (i.e. all the ones I have seen in the past).
+
+    Recall that the observation object is defined here:
+    https://github.com/deepmind/pysc2/blob/master/docs/environment.md#structured
+
+    Yet, we heavily encourage just printing it to get a sense of what's inside.
+    Since we're dealing with replays instead of games, the observations and
+    the name of their attributes change.
     """
 
     # Creating the state
@@ -64,6 +71,5 @@ def get_state(observation):
     }
 
     state["upgrades"] = [upgrade for upgrade in observation.raw_data.player.upgrade_ids]
-    print(f"{observation.game_loop}: {observation.raw_data.player.upgrade_ids}")
 
     return state
