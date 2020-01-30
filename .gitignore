@@ -1,6 +1,9 @@
 # Other stuff
 
 sc2reaper/features/
+sc2reaper/cog_paper_scripts/
+.vscode/
+notebooks/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

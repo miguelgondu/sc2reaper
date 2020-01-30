@@ -34,7 +34,7 @@ def extract_all_info_once(controller, replay_data, map_data, player_id):
     obs = controller.observe()
 
     # Extracting map information
-    height_map_minimap = obs.observation.feature_layer_data.minimap_renders.height_map
+    # height_map_minimap = obs.observation.feature_layer_data.minimap_renders.height_map
     starting_location = None
     for unit in obs.observation.raw_data.units:
         unit_doc = get_unit_doc(unit)
@@ -52,7 +52,7 @@ def extract_all_info_once(controller, replay_data, map_data, player_id):
     except AssertionError:
         print("Wasn't able to determine a player's starting locations, weird")
 
-    minimap = {"minimap": {"height_map": MessageToDict(height_map_minimap)}}
+    minimap = {"minimap": {"height_map": None}}
 
     actions = {}  # a dict of action dics which is to be merged to actual macro actions.
     states = {}
