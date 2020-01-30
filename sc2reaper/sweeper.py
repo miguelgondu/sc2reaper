@@ -9,7 +9,7 @@ from sc2reaper.score_extraction import get_score
 from sc2reaper.state_extraction import get_state
 from sc2reaper.unit_extraction import get_unit_doc
 
-STEP_MULT = 12
+STEP_MULT = 22 * 10
 
 size = point.Point(64, 64)
 interface = sc_pb.InterfaceOptions(
