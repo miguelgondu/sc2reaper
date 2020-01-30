@@ -10,7 +10,7 @@ MATCH_UPS = []
 
 # Entering the mongo instance
 client = MongoClient("localhost", 27017)
-db = client["replay_database_PARALLEL_TESTING"]
+db = client["replay_database_Jan_2020_PARALLEL_TEST_4_0_2"]
 replays_collection = db["replays"]
 players_collection = db["players"]
 states_collection = db["states"]
@@ -27,7 +27,7 @@ def ingest(replay_files):
 
             if info.game_duration_loops < 500:
                 print(f"Replay {replay_file} is too short.")
-                return
+                continue
 
             map_data = None
             if info.local_map_path:
@@ -45,7 +45,7 @@ def ingest(replay_files):
             if len(MATCH_UPS) > 0:
                 if match_up not in MATCH_UPS:
                     print(f"Match-up {match_up} is not in {MATCH_UPS}")
-                    return 
+                    continue 
 
             ## Extracting map information
             map_doc = {}

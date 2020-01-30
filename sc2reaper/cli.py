@@ -8,7 +8,7 @@ import glob
 from sc2reaper import sc2reaper
 from sc2reaper import utils
 
-os.environ["SC2PATH"] = "/media/mgd/DATA/StarCraft2_4_1_2/StarCraftII"
+os.environ["SC2PATH"] = "/media/mgd/DATA/StarCraft2_4_0_2/StarCraftII"
 
 @click.group()
 def main(args=None):
@@ -26,7 +26,6 @@ def ingest(path_to_replays, proc):
     # So that pysc2 runs:
     from absl import flags
     import sys
-
     FLAGS = flags.FLAGS
     flags.DEFINE_integer("proc", 1, "Amount of processors you want to devote.")
     FLAGS(sys.argv)
