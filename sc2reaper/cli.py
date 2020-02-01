@@ -4,6 +4,7 @@ import click
 import multiprocessing as mp
 import os
 import glob
+import pymongo
 
 from sc2reaper import sc2reaper
 from sc2reaper import utils
@@ -19,7 +20,8 @@ def main(args=None):
 @main.command()
 @click.argument("path_to_replays", type=str)
 @click.option("--proc", type=int, default=1, help="Amount of processors you want to devote.")
-def ingest(path_to_replays, proc):
+@click.option("--db_name", type=str, default=None, help="Name of the database you want to create or update.")
+def ingest(path_to_replays, proc, db_name):
     """
     Load a replay into a mongo database.
     """
@@ -28,15 +30,28 @@ def ingest(path_to_replays, proc):
     import sys
     FLAGS = flags.FLAGS
     flags.DEFINE_integer("proc", 1, "Amount of processors you want to devote.")
+    flags.DEFINE_string("db_name", None, "Name of the database you want to create or update.")
     FLAGS(sys.argv)
+
+    if db_name is not None:
+        client = pymongo.MongoClient()
+        db = client[db_name]
+        replays = db["replays"]
 
     if path_to_replays.endswith(".SC2Replay"):
         # it's actually just a replay.
         replay_files = [path_to_replays]
     else:
-        replay_files = glob.glob(f"{path_to_replays}/*.SC2Replay")
+        replay_files = set(glob.glob(f"{path_to_replays}/*.SC2Replay"))
 
-    # TODO: split this list in multiple queues and set up a multiprocess.
+    if db_name is not None:
+        parsed_files = set([
+            doc["replay_name"] for doc in replays.find()
+        ])
+        print(f"Found {len(parsed_files)} replays in the database already.")
+
+        replay_files -= parsed_files
+
     if len(replay_files) > 1:
         replay_files_chunks = utils.split(replay_files, proc)
 

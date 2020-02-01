@@ -4,6 +4,7 @@ sc2reaper/features/
 sc2reaper/cog_paper_scripts/
 .vscode/
 notebooks/
+*_experiment.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
