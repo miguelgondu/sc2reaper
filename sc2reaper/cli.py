@@ -9,7 +9,7 @@ import pymongo
 from sc2reaper import sc2reaper
 from sc2reaper import utils
 
-os.environ["SC2PATH"] = "/media/mgd/DATA/StarCraft2_4_1_2/StarCraftII"
+os.environ["SC2PATH"] = "/media/mgd/DATA/StarCraft2_4_0_2/StarCraftII"
 
 @click.group()
 def main(args=None):
@@ -42,7 +42,7 @@ def ingest(path_to_replays, proc, db_name):
         # it's actually just a replay.
         replay_files = [path_to_replays]
     else:
-        replay_files = set(glob.glob(f"{path_to_replays}/*.SC2Replay"))
+        replay_files = glob.glob(f"{path_to_replays}/*.SC2Replay")
 
     if db_name is not None:
         parsed_files = set([
@@ -50,7 +50,9 @@ def ingest(path_to_replays, proc, db_name):
         ])
         print(f"Found {len(parsed_files)} replays in the database already.")
 
+        replay_files = set(replay_files)
         replay_files -= parsed_files
+        replay_files = list(replay_files)
 
     if len(replay_files) > 1:
         replay_files_chunks = utils.split(replay_files, proc)

@@ -10,7 +10,7 @@ MATCH_UPS = []
 
 # Entering the mongo instance
 client = MongoClient("localhost", 27017)
-db = client["replay_database_Jan_2020_PARALLEL_TEST_4_1_2_refactorization"]
+db = client["replay_database_4_0_2_Jan_2020"]
 replays_collection = db["replays"]
 players_collection = db["players"]
 states_collection = db["states"]
