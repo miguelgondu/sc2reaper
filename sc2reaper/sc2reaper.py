@@ -1,16 +1,22 @@
 """Main module."""
 
 import glob
+import json
 from pymongo import MongoClient
 from pysc2 import run_configs
-
 from sc2reaper.sweeper import extract_all_info_once
 
-MATCH_UPS = []
+# Reading what is set up at the config.json:
+with open("config.json") as fp:
+    config = json.load(fp)
+    MATCH_UPS = config["MATCH_UPS"]
+    DB_NAME = config["DB_NAME"]
+    address = config["PORT_ADDRESS"]
+    port_num = config["PORT_NUMBER"]
 
 # Entering the mongo instance
-client = MongoClient("localhost", 27017)
-db = client["replay_database_4_0_2_Jan_2020"]
+client = MongoClient(address, port_num)
+db = client[DB_NAME]
 replays_collection = db["replays"]
 players_collection = db["players"]
 states_collection = db["states"]
