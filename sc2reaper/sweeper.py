@@ -10,7 +10,7 @@ from sc2reaper.state_extraction import get_state
 from sc2reaper.unit_extraction import get_unit_doc
 import json
 
-with open("config.json") as fp:
+with open(str(__file__).replace('sweeper.py', 'config.json')) as fp:
     doc = json.load(fp)
     STEP_MULT = doc["STEP_MULT"]
 

@@ -7,7 +7,7 @@ from pysc2 import run_configs
 from sc2reaper.sweeper import extract_all_info_once
 
 # Reading what is set up at the config.json:
-with open("config.json") as fp:
+with open(str(__file__).replace('sc2reaper.py', 'config.json')) as fp:
     config = json.load(fp)
     MATCH_UPS = config["MATCH_UPS"]
     DB_NAME = config["DB_NAME"]
