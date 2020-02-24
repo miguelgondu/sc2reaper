@@ -2,6 +2,7 @@
     "DB_NAME": "database_name",
     "STEP_MULT": 220,
     "MATCH_UPS": [],
+    "SC2_PATH": "path/to/sc2",
     "PORT_ADDRESS": "localhost",
     "PORT_NUMBER": 27017
 }

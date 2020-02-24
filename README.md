@@ -49,6 +49,7 @@ Usage
 	- `DB_NAME`: the name of the database you want to create or update.
 	- `STEP_MULT`: the amount of frames per step. For example, setting it to 22 means that you will gather data for (roughly) every second of the replay.
 	- `MATCH_UPS`: a list of the match-ups you're interested in. Write it as "TvZ" and "ZvT" if you want, for example, to include all the matches with one Terran player and one Zerg player. Leave it empty to consider all match-ups.
+	- `SC2_PATH`: the path to the StarCraftII folder.
 	- `PORT_ADDRESS`: the address of the port of the `mongod` instance (by default `localhost`).
 	- `PORT_NUMBER`: the number of the port of the `mongod` instance (by default 27017).
 2. You should be ready to run 

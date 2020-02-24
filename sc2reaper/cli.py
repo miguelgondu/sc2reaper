@@ -5,12 +5,17 @@ import multiprocessing as mp
 import os
 import glob
 import pymongo
+import json
 
 from sc2reaper.sc2reaper import ingest as _ingest
 from sc2reaper.sc2reaper import DB_NAME
 from sc2reaper import utils
 
-os.environ["SC2PATH"] = "/media/mgd/DATA/StarCraft2_4_0_2/StarCraftII"
+with open(str(__file__).replace('cli.py', 'config.json')) as fp:
+    doc = json.load(fp)
+    sc2_path = doc["SC2_PATH"]
+
+os.environ["SC2PATH"] = sc2_path
 
 @click.group()
 def main(args=None):
