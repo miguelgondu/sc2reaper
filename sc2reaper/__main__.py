@@ -20,6 +20,8 @@ from sc2reaper import utils
 with open(str(__file__).replace('__main__.py', 'config.json')) as fp:
     doc = json.load(fp)
     sc2_path = doc["SC2_PATH"]
+    address = doc["PORT_ADDRESS"]
+    port = doc["PORT_NUMBER"]
 
 os.environ["SC2PATH"] = sc2_path
 
@@ -43,7 +45,7 @@ def ingest(path_to_replays, proc):
     # If the database already exists, we check if we have already
     # processed some of the replays, and substract them from the
     # set we want to process. That way, we don't process replays twice.
-    client = pymongo.MongoClient()
+    client = pymongo.MongoClient(address, port)
     if DB_NAME in client.list_database_names():
         db = client[DB_NAME]
         replays = db["replays"]
