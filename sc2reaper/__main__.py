@@ -1,6 +1,5 @@
 """Package as standalone usable sc2reaper."""
 import sys
-import click
 import multiprocessing as mp
 import os
 import glob
@@ -17,8 +16,6 @@ with open(str(__file__).replace('__main__.py', 'config.json')) as fp:
 
 os.environ["SC2PATH"] = sc2_path
 
-@click.argument("path_to_replays", type=str)
-@click.option("--proc", type=int, default=1, help="Amount of processors you want to devote.")
 def ingest(path_to_replays, proc):
     """
     Load a replay into a mongo database.
@@ -71,4 +68,6 @@ def ingest(path_to_replays, proc):
 
 
 if __name__ == "__main__":
-    ingest()  # pragma: no cover
+    argv = sys.argv
+    # print(argv)
+    ingest(argv[1], argv[2])
