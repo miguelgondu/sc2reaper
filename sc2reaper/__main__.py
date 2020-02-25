@@ -1,4 +1,11 @@
-"""Package as standalone usable sc2reaper."""
+"""
+Package as standalone usable sc2reaper.
+Usage:
+python -m sc2reaper path/to/replays amount_of_processors
+
+Works great if you're running a very particular python executable
+somewhere in a server.
+"""
 import sys
 import multiprocessing as mp
 import os
@@ -27,6 +34,12 @@ def ingest(path_to_replays, proc):
     flags.DEFINE_integer("proc", 1, "Amount of processors you want to devote.")
     FLAGS(sys.argv)
 
+    if path_to_replays.endswith(".SC2Replay"):
+        # it's actually just a replay.
+        replay_files = [path_to_replays]
+    else:
+        replay_files = glob.glob(f"{path_to_replays}/*.SC2Replay")
+
     # If the database already exists, we check if we have already
     # processed some of the replays, and substract them from the
     # set we want to process. That way, we don't process replays twice.
@@ -34,14 +47,6 @@ def ingest(path_to_replays, proc):
     if DB_NAME in client.list_database_names():
         db = client[DB_NAME]
         replays = db["replays"]
-
-    if path_to_replays.endswith(".SC2Replay"):
-        # it's actually just a replay.
-        replay_files = [path_to_replays]
-    else:
-        replay_files = glob.glob(f"{path_to_replays}/*.SC2Replay")
-
-    if DB_NAME in client.list_database_names():
         parsed_files = set([
             doc["replay_name"] for doc in replays.find()
         ])

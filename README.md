@@ -52,11 +52,7 @@ Usage
 	- `SC2_PATH`: the path to the StarCraftII folder.
 	- `PORT_ADDRESS`: the address of the port of the `mongod` instance (by default `localhost`).
 	- `PORT_NUMBER`: the number of the port of the `mongod` instance (by default 27017).
-2. You should be ready to run 
-
-```sc2reaper ingest path_to_replay_files --proc=n```
-
-Where `n` is the amount of processors that you want to devote to the process. This ingest function will look for all the files that end in ".SC2Replay" using `glob`. You can also pass the path to a single .SC2Replay file.
+2. You should be ready to run `sc2reaper ingest path_to_replay_files --proc=n` or `python -m sc2reaper path_to_replays n`, where `n` is the amount of processors that you want to devote to the process. This ingest function will look for all the files that end in ".SC2Replay" using `glob`. You can also pass the path to a single .SC2Replay file.
 
 After the process ends, the data should be stored in your mongo database.
 
