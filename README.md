@@ -44,8 +44,8 @@ Now you're ready to use `sc2reaper` as a command-line tool! But be careful, in o
 Usage
 -----
 
-0. [Set up a `mongod` instance](https://docs.mongodb.com/manual/tutorial/install-mongodb-enterprise-on-ubuntu/#start-mongodb) running in the default port (or at any port, but remember to change the url in the code itself).
-1. You will need to change some of the global default values that indicate which replays to store and how to store them. These global values are specified in the `config.json` file you will find inside the sc2reaper folder. It should contain:
+1. [Set up a `mongod` instance](https://docs.mongodb.com/manual/tutorial/install-mongodb-enterprise-on-ubuntu/#start-mongodb) running in the default port (or at any port, but remember to change the url in the code itself).
+2. You will need to change some of the global default values that indicate which replays to store and how to store them. These global values are specified in the `config.json` file you will find inside the sc2reaper folder. It should contain:
 	- `DB_NAME`: the name of the database you want to create or update.
 	- `STEP_MULT`: the amount of frames per step. For example, setting it to 22 means that you will gather data for (roughly) every second of the replay.
 	- `MATCH_UPS`: a list of the match-ups you're interested in. Write it as "TvZ" and "ZvT" if you want, for example, to include all the matches with one Terran player and one Zerg player. Leave it empty to consider all match-ups.
