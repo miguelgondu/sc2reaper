@@ -70,4 +70,4 @@ def ingest(path_to_replays, proc):
 if __name__ == "__main__":
     argv = sys.argv
     # print(argv)
-    ingest(argv[1], argv[2])
+    ingest(argv[1], int(argv[2]))
