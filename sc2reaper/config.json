@@ -1,8 +1,8 @@
 {
-    "DB_NAME": "database_name",
+    "DB_NAME": "testing_fork_bombs",
     "STEP_MULT": 220,
     "MATCH_UPS": [],
-    "SC2_PATH": "path/to/sc2",
+    "SC2_PATH": "/media/mgd/DATA/StarCraft2_4_0_2/StarCraftII",
     "PORT_ADDRESS": "localhost",
     "PORT_NUMBER": 27017
 }

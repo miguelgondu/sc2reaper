@@ -15,15 +15,16 @@ with open(str(__file__).replace('sc2reaper.py', 'config.json')) as fp:
     port_num = config["PORT_NUMBER"]
 
 # Entering the mongo instance
-client = MongoClient(address, port_num)
-db = client[DB_NAME]
-replays_collection = db["replays"]
-players_collection = db["players"]
-states_collection = db["states"]
-actions_collection = db["actions"]
-scores_collection = db["scores"]
 
 def process_replays(replay_files, run_config, last_replay_processed=None):
+    client = MongoClient(address, port_num)
+    db = client[DB_NAME]
+    replays_collection = db["replays"]
+    players_collection = db["players"]
+    states_collection = db["states"]
+    actions_collection = db["actions"]
+    scores_collection = db["scores"]
+
     if last_replay_processed:
         index = replay_files.index(last_replay_processed)
     else:
@@ -153,6 +154,7 @@ def process_replays(replay_files, run_config, last_replay_processed=None):
                 replays_collection.insert(replay_doc)
                 print(f"Successfully filled all collections of replay {replay_id}")
     except Exception as e: # Add the exception to be the protocol error.
+        client.close()        
         print(f"Replay {last_replay_processed} seems to be closing the connection. Exception: {e}")
         process_replays(replay_files, run_config, last_replay_processed=last_replay_processed)
 
