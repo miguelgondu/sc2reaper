@@ -10,7 +10,7 @@ MATCH_UPS = []
 
 # Entering the mongo instance
 client = MongoClient("localhost", 27017)
-db = client["replay_database_4_0_2_Jan_2020"]
+db = client["database_example_hernan"]
 replays_collection = db["replays"]
 players_collection = db["players"]
 states_collection = db["states"]
@@ -18,6 +18,7 @@ actions_collection = db["actions"]
 scores_collection = db["scores"]
 
 def process_replays(replay_files, run_config, last_replay_processed=None):
+    print(replay_files)
     if last_replay_processed:
         index = replay_files.index(last_replay_processed)
     else:

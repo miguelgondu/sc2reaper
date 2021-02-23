@@ -9,7 +9,8 @@ import pymongo
 from sc2reaper import sc2reaper
 from sc2reaper import utils
 
-os.environ["SC2PATH"] = "/media/mgd/DATA/StarCraft2_4_0_2/StarCraftII"
+# os.environ["SC2PATH"] = "/media/mgd/DATA/StarCraft2_4_0_2/StarCraftII"
+os.environ["SC2PATH"] = "/Applications/StarCraft II"
 
 @click.group()
 def main(args=None):
@@ -55,6 +56,8 @@ def ingest(path_to_replays, proc, db_name):
         replay_files = list(replay_files)
 
     if len(replay_files) > 1:
+        # TODO: this is causing a bug.
+        # The actual test is if path_to_replays is a list/path in the beginning
         replay_files_chunks = utils.split(replay_files, proc)
 
         # Ingesting the replay
@@ -62,11 +65,11 @@ def ingest(path_to_replays, proc, db_name):
             p.map(sc2reaper.ingest, replay_files_chunks)
     
     elif len(replay_files) == 1:
-        sc2reaper.ingest(path_to_replays)
+        sc2reaper.ingest([path_to_replays])
 
     else:
         raise ValueError("Found no replays in path. Do they end on SC2Replay?")
 
 
 if __name__ == "__main__":
-    main()  # pragma: no cover
+    main()
