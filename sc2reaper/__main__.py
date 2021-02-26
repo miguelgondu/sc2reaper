@@ -20,11 +20,11 @@ from sc2reaper import utils
 
 with open(str(__file__).replace('__main__.py', 'config.json')) as fp:
     doc = json.load(fp)
-    sc2_path = doc["SC2_PATH"]
+    sc2_path = Path(doc["SC2_PATH"])
     address = doc["PORT_ADDRESS"]
     port = doc["PORT_NUMBER"]
 
-os.environ["SC2PATH"] = sc2_path
+os.environ["SC2PATH"] = str(sc2_path)
 
 def ingest(path_to_replays, proc):
     """
@@ -41,9 +41,9 @@ def ingest(path_to_replays, proc):
 
     if path_to_replays.name.endswith(".SC2Replay"):
         # it's actually just a replay.
-        replay_files = [path_to_replays]
+        replay_files = [str(path_to_replays)]
     else:
-        replay_files = path_to_replays.glob("*.SC2Replay")
+        replay_files = map(str, path_to_replays.glob("*.SC2Replay"))
 
     # If the database already exists, we check if we have already
     # processed some of the replays, and substract them from the

@@ -2,6 +2,8 @@
 
 import glob
 import json
+from pathlib import Path
+from typing import List
 from pymongo import MongoClient
 from pysc2 import run_configs
 from sc2reaper.sweeper import extract_all_info_once
@@ -16,7 +18,7 @@ with open(str(__file__).replace('sc2reaper.py', 'config.json')) as fp:
 
 # Entering the mongo instance
 
-def process_replays(replay_files, run_config, last_replay_processed=None):
+def process_replays(replay_files: List[Path], run_config, last_replay_processed=None):
     client = MongoClient(address, port_num)
     db = client[DB_NAME]
     replays_collection = db["replays"]
@@ -34,7 +36,7 @@ def process_replays(replay_files, run_config, last_replay_processed=None):
         with run_config.start() as controller:
             for replay_file in replay_files[index + 1:]:
                 last_replay_processed = replay_file
-                print(f"Processing replay {replay_file}")
+                print(f"Processing replay {replay_file.name} HHH")
                 # And they wrap this in a try except too. (No exceptions in this case)
                 replay_data = run_config.replay_data(replay_file)
                 info = controller.replay_info(replay_data)
@@ -75,7 +77,8 @@ def process_replays(replay_files, run_config, last_replay_processed=None):
                 # Running the replay for each player
                 for player_info in info.player_info:
                     player_id = player_info.player_info.player_id
-                    replay_id = replay_file.split("/")[-1].split(".")[0]
+                    replay_id = replay_file.name
+                    replay_name = str(replay_file)
 
                     # Extracting info from replays for a player
                     states, actions, scores, minimap, starting_location = extract_all_info_once(controller, replay_data, map_data, player_id)
@@ -94,7 +97,7 @@ def process_replays(replay_files, run_config, last_replay_processed=None):
                         result = 0
 
                     player_doc = {
-                        "replay_name": replay_file,
+                        "replay_name": replay_name,
                         "replay_id": replay_id,
                         "player_id": player_id,
                         "player_mmr": info.player_info[player_id - 1].player_mmr,
@@ -109,7 +112,7 @@ def process_replays(replay_files, run_config, last_replay_processed=None):
                     states_documents = []
                     for frame in states:
                         state_doc = {
-                            "replay_name": replay_file,
+                            "replay_name": replay_name,
                             "replay_id": replay_id,
                             "player_id": player_id,
                             "frame_id": int(frame),
@@ -118,7 +121,7 @@ def process_replays(replay_files, run_config, last_replay_processed=None):
                         states_documents.append(state_doc)
 
                     actions_documents = [{
-                                    "replay_name": replay_file,
+                                    "replay_name": replay_name,
                                     "replay_id": replay_id,
                                     "player_id": player_id,
                                     "frame_id": int(frame),
@@ -128,7 +131,7 @@ def process_replays(replay_files, run_config, last_replay_processed=None):
                     scores_documents = []
                     for frame in scores:
                         score_doc = {
-                            "replay_name": replay_file,
+                            "replay_name": replay_name,
                             "replay_id": replay_id,
                             "player_id": player_id,
                             "frame_id": int(frame),
@@ -142,7 +145,7 @@ def process_replays(replay_files, run_config, last_replay_processed=None):
                     scores_collection.insert_many(scores_documents)
 
                 replay_doc = {
-                    "replay_name": replay_file,
+                    "replay_name": replay_name,
                     "replay_id": replay_id,
                     "match_up": match_up,
                     "game_duration_loops": info.game_duration_loops,
@@ -155,7 +158,7 @@ def process_replays(replay_files, run_config, last_replay_processed=None):
                 print(f"Successfully filled all collections of replay {replay_id}")
     except Exception as e: # Add the exception to be the protocol error.
         client.close()        
-        print(f"Replay {last_replay_processed} seems to be closing the connection. Exception: {e}")
+        print(f"Replay {last_replay_processed.name} seems to be closing the connection. Exception: {e}")
         process_replays(replay_files, run_config, last_replay_processed=last_replay_processed)
 
 def ingest(replay_files):
