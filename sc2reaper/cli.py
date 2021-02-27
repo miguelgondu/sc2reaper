@@ -53,7 +53,8 @@ def ingest(path_to_replays, proc):
         # it's actually just a replay.
         replay_files = [path_to_replays]
     else:
-        replay_files = path_to_replays.glob(f"*.SC2Replay")
+        replay_files = list(path_to_replays.glob(f"*.SC2Replay"))
+
 
     if DB_NAME in client.list_database_names():
         parsed_files = set([

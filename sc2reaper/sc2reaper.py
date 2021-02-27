@@ -36,7 +36,7 @@ def process_replays(replay_files: List[Path], run_config, last_replay_processed=
         with run_config.start() as controller:
             for replay_file in replay_files[index + 1:]:
                 last_replay_processed = replay_file
-                print(f"Processing replay {replay_file.name} HHH")
+                print(f"Processing replay {replay_file.name}")
                 # And they wrap this in a try except too. (No exceptions in this case)
                 replay_data = run_config.replay_data(replay_file)
                 info = controller.replay_info(replay_data)
