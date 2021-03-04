@@ -9,7 +9,6 @@ somewhere in a server.
 import sys
 import multiprocessing as mp
 import os
-import glob
 import pymongo
 import json
 
@@ -18,13 +17,16 @@ from sc2reaper.sc2reaper import ingest as _ingest
 from sc2reaper.sc2reaper import DB_NAME
 from sc2reaper import utils
 
-with open(str(__file__).replace('__main__.py', 'config.json')) as fp:
+
+cwd_ = Path.cwd()
+config_ = (cwd_ / 'config.json')
+with config_.open() as fp:
     doc = json.load(fp)
-    sc2_path = Path(doc["SC2_PATH"])
+    sc2_path = doc["SC2_PATH"]
     address = doc["PORT_ADDRESS"]
     port = doc["PORT_NUMBER"]
 
-os.environ["SC2PATH"] = str(sc2_path)
+os.environ["SC2PATH"] = sc2_path
 
 def ingest(path_to_replays, proc):
     """

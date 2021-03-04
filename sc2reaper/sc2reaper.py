@@ -1,6 +1,4 @@
 """Main module."""
-
-import glob
 import json
 from pathlib import Path
 from typing import List
@@ -8,8 +6,10 @@ from pymongo import MongoClient
 from pysc2 import run_configs
 from sc2reaper.sweeper import extract_all_info_once
 
-# Reading what is set up at the config.json:
-with open(str(__file__).replace('sc2reaper.py', 'config.json')) as fp:
+# Reading the set up from config.json found in the current working directory(cwd_):
+cwd_ = Path.cwd()
+config_ = (cwd_ / 'config.json')
+with config_.open() as fp:
     config = json.load(fp)
     MATCH_UPS = config["MATCH_UPS"]
     DB_NAME = config["DB_NAME"]
@@ -18,7 +18,7 @@ with open(str(__file__).replace('sc2reaper.py', 'config.json')) as fp:
 
 # Entering the mongo instance
 
-def process_replays(replay_files: List[Path], run_config, last_replay_processed=None):
+def process_replays(replay_files, run_config, last_replay_processed=None):
     client = MongoClient(address, port_num)
     db = client[DB_NAME]
     replays_collection = db["replays"]
@@ -165,3 +165,6 @@ def ingest(replay_files):
     run_config = run_configs.get()
     # They wrap this in a try-except.
     process_replays(replay_files, run_config)
+
+# if __name__ == '__main__':
+#     pass
