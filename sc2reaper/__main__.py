@@ -18,9 +18,7 @@ from sc2reaper.sc2reaper import DB_NAME
 from sc2reaper import utils
 
 
-cwd_ = Path.cwd()
-config_ = (cwd_ / 'config.json')
-with config_.open() as fp:
+with open(str(__file__).replace('sc2reaper.py', 'config.json')) as fp:
     doc = json.load(fp)
     sc2_path = doc["SC2_PATH"]
     address = doc["PORT_ADDRESS"]
