@@ -9,15 +9,16 @@ somewhere in a server.
 import sys
 import multiprocessing as mp
 import os
-import glob
 import pymongo
 import json
 
+from pathlib import Path
 from sc2reaper.sc2reaper import ingest as _ingest
 from sc2reaper.sc2reaper import DB_NAME
 from sc2reaper import utils
 
-with open(str(__file__).replace('__main__.py', 'config.json')) as fp:
+
+with open(str(__file__).replace('sc2reaper.py', 'config.json')) as fp:
     doc = json.load(fp)
     sc2_path = doc["SC2_PATH"]
     address = doc["PORT_ADDRESS"]
@@ -36,11 +37,13 @@ def ingest(path_to_replays, proc):
     flags.DEFINE_integer("proc", 1, "Amount of processors you want to devote.")
     FLAGS(sys.argv)
 
-    if path_to_replays.endswith(".SC2Replay"):
+    path_to_replays = Path(path_to_replays)
+
+    if path_to_replays.name.endswith(".SC2Replay"):
         # it's actually just a replay.
-        replay_files = [path_to_replays]
+        replay_files = [str(path_to_replays)]
     else:
-        replay_files = glob.glob(f"{path_to_replays}/*.SC2Replay")
+        replay_files = map(str, path_to_replays.glob("*.SC2Replay"))
 
     # If the database already exists, we check if we have already
     # processed some of the replays, and substract them from the

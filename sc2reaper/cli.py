@@ -7,17 +7,18 @@ import glob
 import pymongo
 import json
 
+from pathlib import Path
 from sc2reaper.sc2reaper import ingest as _ingest
 from sc2reaper.sc2reaper import DB_NAME
 from sc2reaper import utils
 
 with open(str(__file__).replace('cli.py', 'config.json')) as fp:
     doc = json.load(fp)
-    sc2_path = doc["SC2_PATH"]
+    sc2_path = Path(doc["SC2_PATH"])
     address = doc["PORT_ADDRESS"]
     port = doc["PORT_NUMBER"]
 
-os.environ["SC2PATH"] = sc2_path
+os.environ["SC2PATH"] = str(sc2_path)
 
 @click.group()
 def main(args=None):
@@ -43,15 +44,17 @@ def ingest(path_to_replays, proc):
     # processed some of the replays, and substract them from the
     # set we want to process. That way, we don't process replays twice.
     client = pymongo.MongoClient(address, port)
+    path_to_replays = Path(path_to_replays)
     if DB_NAME in client.list_database_names():
         db = client[DB_NAME]
         replays = db["replays"]
 
-    if path_to_replays.endswith(".SC2Replay"):
+    if path_to_replays.name.endswith(".SC2Replay"):
         # it's actually just a replay.
         replay_files = [path_to_replays]
     else:
-        replay_files = glob.glob(f"{path_to_replays}/*.SC2Replay")
+        replay_files = list(path_to_replays.glob(f"*.SC2Replay"))
+
 
     if DB_NAME in client.list_database_names():
         parsed_files = set([
