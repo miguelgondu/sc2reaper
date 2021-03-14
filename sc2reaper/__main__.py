@@ -11,8 +11,10 @@ import multiprocessing as mp
 import os
 import pymongo
 import json
+import jsonschema
 
 from pathlib import Path
+from jsonschema import validate
 from sc2reaper.sc2reaper import ingest as _ingest
 from sc2reaper.sc2reaper import DB_NAME
 from sc2reaper import utils
@@ -20,13 +22,48 @@ from sc2reaper import utils
 
 cwd_ = Path.cwd()
 config_ = (cwd_ / 'config.json')
-with config_.open() as fp:
-    doc = json.load(fp)
-    sc2_path = doc["SC2_PATH"]
-    address = doc["PORT_ADDRESS"]
-    port = doc["PORT_NUMBER"]
+config_schema = {
+    "type": "object",
+    "properties":{
+        "DB_NAME": {"type":"string"},
+        "STEP_MULT": {"type":"number"},
+        "MATCH_UPS":  {"type":"array"},
+        "SC2_PATH":  {"type":"string"},
+        "PORT_ADDRESS":  {"type":"string"},
+        "PORT_NUMBER": {"type":"number"}
+    }
+}
 
-os.environ["SC2PATH"] = sc2_path
+def validateConfig(config_json):
+    try:
+        validate(config_schema, config_json)
+    except jsonschema.exceptions.ValidationError as err:
+        return False
+    except jsonschema.exceptions.SchemaError as err:
+        print(err)
+        print("The Config_schema is invalid")
+        raise err
+    return True
+
+
+if config_.exists() and validateConfig(json.load(config_.open())):
+    print("Loading according to local config.json")
+    with config_.open() as fp:
+        doc = json.load(fp)
+        sc2_path = doc["SC2_PATH"]
+        address = doc["PORT_ADDRESS"]
+        port = doc["PORT_NUMBER"]
+    os.environ["SC2PATH"] = sc2_path
+
+else:
+    print("Loading according to default config.json")
+    default_config_path =  Path(__file__).parent / 'config.json'
+    with default_config_path.open() as fp:
+        doc = json.load(fp)
+        sc2_path = doc["SC2_PATH"]
+        address = doc["PORT_ADDRESS"]
+        port = doc["PORT_NUMBER"]
+    os.environ["SC2PATH"] = sc2_path
 
 def ingest(path_to_replays, proc):
     """

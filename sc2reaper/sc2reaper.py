@@ -1,6 +1,10 @@
 """Main module."""
 import json
+import jsonschema
+import os
+
 from pathlib import Path
+from jsonschema import validate
 from typing import List
 from pymongo import MongoClient
 from pysc2 import run_configs
@@ -9,12 +13,50 @@ from sc2reaper.sweeper import extract_all_info_once
 # Reading the set up from config.json found in the current working directory(cwd_):
 cwd_ = Path.cwd()
 config_ = (cwd_ / 'config.json')
-with config_.open() as fp:
-    config = json.load(fp)
-    MATCH_UPS = config["MATCH_UPS"]
-    DB_NAME = config["DB_NAME"]
-    address = config["PORT_ADDRESS"]
-    port_num = config["PORT_NUMBER"]
+
+config_schema = {
+    "type": "object",
+    "properties":{
+        "DB_NAME": {"type":"string"},
+        "STEP_MULT": {"type":"number"},
+        "MATCH_UPS":  {"type":"array"},
+        "SC2_PATH":  {"type":"string"},
+        "PORT_ADDRESS":  {"type":"string"},
+        "PORT_NUMBER": {"type":"number"}
+    }
+}
+
+def validateConfig(config_json):
+    try:
+        validate(config_schema, config_json)
+    except jsonschema.exceptions.ValidationError as err:
+        return False
+    except jsonschema.exceptions.SchemaError as err:
+        print(err)
+        print("The Config_schema is invalid")
+        raise err
+    
+    return True
+
+
+if config_.exists() and validateConfig(json.load(config_.open())):
+    print("Loading according to local config.json")
+    with config_.open() as fp:
+        config = json.load(fp)
+        MATCH_UPS = config["MATCH_UPS"]
+        DB_NAME = config["DB_NAME"]
+        address = config["PORT_ADDRESS"]
+        port_num = config["PORT_NUMBER"]
+
+else:
+    print("Loading according to default config.json")
+    default_config_path =  Path(__file__).parent / 'config.json'
+    with default_config_path.open() as fp:
+        config = json.load(fp)
+        MATCH_UPS = config["MATCH_UPS"]
+        DB_NAME = config["DB_NAME"]
+        address = config["PORT_ADDRESS"]
+        port_num = config["PORT_NUMBER"]
 
 # Entering the mongo instance
 
