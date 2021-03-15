@@ -37,6 +37,7 @@ def get_state(observation):
         "total": supply_extraction.get_total_supply(observation),
         "army": supply_extraction.get_army_supply(observation),
         "workers": supply_extraction.get_worker_supply(observation),
+        "idle_workers": supply_extraction.get_idle_worker_count(observation)
     }
 
     allied_units = unit_extraction.get_allied_units(observation)  # holds unit docs.

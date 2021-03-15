@@ -13,8 +13,8 @@ def get_score(observation):
     observations, feel free to print score_obs (or obs.score).
     """
     score = {}
-
-    score_obs = observation.score.score_details
+    
+    score_obs = observation.score.score_details    
 
     score["collection_rate"] = {
         "minerals": score_obs.collection_rate_minerals,
@@ -22,6 +22,7 @@ def get_score(observation):
     }
 
     score["idle_worker_time"] = score_obs.idle_worker_time
+    score["idle_production_time"] = score_obs.idle_production_time
 
     score["killed_minerals"] = {
         "none": score_obs.killed_minerals.none,
