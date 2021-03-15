@@ -12,3 +12,6 @@ def get_army_supply(observation):
 
 def get_worker_supply(observation):
     return observation.player_common.food_workers
+
+def get_idle_worker_count(observation):
+    return observation.player_common.idle_worker_count
