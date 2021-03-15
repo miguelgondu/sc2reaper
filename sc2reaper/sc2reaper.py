@@ -11,14 +11,6 @@ from pysc2 import run_configs
 from sc2reaper.sweeper import extract_all_info_once
 
 # Reading the set up from config.json found in the current working directory(cwd_):
-<<<<<<< HEAD
-with open(str(__file__).replace('sc2reaper.py', 'config.json')) as fp:
-    config = json.load(fp)
-    MATCH_UPS = config["MATCH_UPS"]
-    DB_NAME = config["DB_NAME"]
-    address = config["PORT_ADDRESS"]
-    port_num = config["PORT_NUMBER"]
-=======
 cwd_ = Path.cwd()
 config_ = (cwd_ / 'config.json')
 
@@ -65,7 +57,6 @@ else:
         DB_NAME = config["DB_NAME"]
         address = config["PORT_ADDRESS"]
         port_num = config["PORT_NUMBER"]
->>>>>>> ed773e7794ab82443bd7314a5cb9f4839ddd28fc
 
 # Entering the mongo instance
 
