@@ -82,7 +82,7 @@ def ingest(path_to_replays, proc):
         # it's actually just a replay.
         replay_files = [str(path_to_replays)]
     else:
-        replay_files = map(str, path_to_replays.glob("*.SC2Replay"))
+        replay_files = [replay for replay in path_to_replays.glob("*.SC2Replay")]
 
     # If the database already exists, we check if we have already
     # processed some of the replays, and substract them from the
@@ -98,7 +98,7 @@ def ingest(path_to_replays, proc):
 
         replay_files = set(replay_files)
         replay_files -= parsed_files
-        replay_files = list(replay_files)
+        replay_files = replay_files
 
     client.close()
 
