@@ -1,11 +1,9 @@
 """Main module."""
 import json
 import jsonschema
-import os
 
 from pathlib import Path
 from jsonschema import validate
-from typing import List
 from pymongo import MongoClient
 from pysc2 import run_configs
 from sc2reaper.sweeper import extract_all_info_once
