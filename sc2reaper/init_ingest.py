@@ -1,32 +1,12 @@
-"""Console script for sc2reaper."""
-import click
-import multiprocessing as mp
-import os
 import pymongo
-import json
+import multiprocessing as mp
 
 from pathlib import Path
 from sc2reaper.sc2reaper import ingest as _ingest
-from sc2reaper.sc2reaper import DB_NAME
+from sc2reaper.sc2reaper import DB_NAME, address, port_num
 from sc2reaper import utils
 
-with open(str(__file__).replace('cli.py', 'config.json')) as fp:
-    doc = json.load(fp)
-    sc2_path = Path(doc["SC2_PATH"])
-    address = doc["PORT_ADDRESS"]
-    port = doc["PORT_NUMBER"]
 
-os.environ["SC2PATH"] = str(sc2_path)
-
-@click.group()
-def main(args=None):
-    """SC2 Reaper command line tools"""
-    return 0
-
-
-@main.command()
-@click.argument("path_to_replays", type=str)
-@click.option("--proc", type=int, default=1, help="Amount of processors you want to devote.")
 def ingest(path_to_replays, proc):
     """
     Load a replay into a mongo database.
@@ -38,31 +18,29 @@ def ingest(path_to_replays, proc):
     flags.DEFINE_integer("proc", 1, "Amount of processors you want to devote.")
     FLAGS(sys.argv)
 
-    # If the database already exists, we check if we have already
-    # processed some of the replays, and substract them from the
-    # set we want to process. That way, we don't process replays twice.
-    client = pymongo.MongoClient(address, port)
     path_to_replays = Path(path_to_replays)
-    if DB_NAME in client.list_database_names():
-        db = client[DB_NAME]
-        replays = db["replays"]
 
     if path_to_replays.name.endswith(".SC2Replay"):
         # it's actually just a replay.
-        replay_files = [path_to_replays]
+        replay_files = [str(path_to_replays)]
     else:
         replay_files = [replay for replay in path_to_replays.glob("*.SC2Replay")]
 
-
+    # If the database already exists, we check if we have already
+    # processed some of the replays, and substract them from the
+    # set we want to process. That way, we don't process replays twice.
+    client = pymongo.MongoClient(address, port_num)
     if DB_NAME in client.list_database_names():
+        db = client[DB_NAME]
+        replays = db["replays"]
         parsed_files = set([
-            Path(doc["replay_name"]) for doc in replays.find()
+            Path(doc['replay_name']) for doc in replays.find()
         ])
         print(f"Found {len(parsed_files)} replays in the database already.")
-        
+
         replay_files = set(replay_files)
         replay_files -= parsed_files
-        replay_files = replay_files
+        replay_files = list(replay_files)
 
     client.close()
 
@@ -78,7 +56,3 @@ def ingest(path_to_replays, proc):
 
     else:
         raise ValueError("Found no new replays in path. Do they end on SC2Replay?")
-
-
-if __name__ == "__main__":
-    main()  # pragma: no cover

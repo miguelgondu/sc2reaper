@@ -82,7 +82,7 @@ def ingest(path_to_replays, proc):
         # it's actually just a replay.
         replay_files = [str(path_to_replays)]
     else:
-        replay_files = map(str, path_to_replays.glob("*.SC2Replay"))
+        replay_files = [replay for replay in path_to_replays.glob("*.SC2Replay")]
 
     # If the database already exists, we check if we have already
     # processed some of the replays, and substract them from the
@@ -92,13 +92,13 @@ def ingest(path_to_replays, proc):
         db = client[DB_NAME]
         replays = db["replays"]
         parsed_files = set([
-            doc["replay_name"] for doc in replays.find()
+            Path(doc['replay_name']) for doc in replays.find()
         ])
         print(f"Found {len(parsed_files)} replays in the database already.")
 
         replay_files = set(replay_files)
         replay_files -= parsed_files
-        replay_files = list(replay_files)
+        replay_files = replay_files
 
     client.close()
 
@@ -113,7 +113,7 @@ def ingest(path_to_replays, proc):
         _ingest(replay_files)
 
     else:
-        raise ValueError("Found no replays in path. Do they end on SC2Replay?")
+        raise ValueError("Found no new replays in path. Do they end on SC2Replay?")
 
 
 if __name__ == "__main__":
